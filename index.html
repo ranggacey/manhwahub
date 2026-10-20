@@ -418,7 +418,7 @@ function miniCard(m, opts) {
   el.innerHTML = `
     <div class="cov"><img src="${esc(m.coverImage.extraLarge)}" alt="" loading="lazy">
       <span class="sc"><svg class="ic"><use href="#i-star"/></svg>${score(m)}</span></div>
-    <h4 data-tid="${m.id}" data-orig="${esc(title(m))}">${esc(title(m))}</h4>
+    <h4>${esc(title(m))}</h4>
     <p>${m.chapters ? m.chapters + " chapter" : "? chapter"} · ${esc(statusId(m.status))}</p>
     ${pct != null ? `<div class="bar"><i style="width:${pct}%"></i></div><p>Ch. ${opts.progress} · ${pct}%</p>` : ""}`;
   el.addEventListener("click", () => openDetail(m));
@@ -437,7 +437,7 @@ function buildHero(items) {
       <div class="sh"></div>
       <div class="cap">
         <div class="kick"><svg class="ic sm" style="stroke:var(--gold)"><use href="#i-flame"/></svg> Sorotan Trending</div>
-        <h3 data-tid="${m.id}" data-orig="${esc(title(m))}">${esc(title(m))}</h3>
+        <h3>${esc(title(m))}</h3>
         <div class="mm"><i>★ ${score(m)}</i><i>${m.chapters ? m.chapters + " chapter" : "Chapter ?"}</i><i>${esc(statusId(m.status))}</i>${(m.genres || []).slice(0, 2).map((g) => `<i>${esc(genreId(g))}</i>`).join("")}</div>
       </div>
     </div>`).join("")}</div>
@@ -551,7 +551,7 @@ async function loadTop() {
       row.innerHTML = `
         <div class="no">${i + 1}</div>
         <img src="${esc(m.coverImage.extraLarge)}" alt="" loading="lazy">
-        <div class="mid"><h4 data-tid="${m.id}" data-orig="${esc(title(m))}">${esc(title(m))}</h4>
+        <div class="mid"><h4>${esc(title(m))}</h4>
         <p><svg class="ic"><use href="#i-star"/></svg>${score(m)} · ${m.chapters ? m.chapters + " chapter" : "? chapter"} · ${esc(statusId(m.status))}</p></div>
         <svg class="ic chev"><use href="#i-chev"/></svg>`;
       row.addEventListener("click", () => openDetail(m));
@@ -584,7 +584,7 @@ function renderLib() {
     row.innerHTML = `
       <img src="${esc(it.cover)}" alt="">
       <div class="mid">
-        <h3 data-tid="${it.id}" data-orig="${esc(it.title)}">${esc(it.title)}</h3>
+        <h3>${esc(it.title)}</h3>
         <div class="sub">${it.chapters ? "Total " + it.chapters + " chapter · " + pct + "% dibaca" : "Jumlah chapter belum diketahui"}</div>
         ${it.chapters ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ""}
         <div class="stepper">
@@ -648,49 +648,6 @@ async function setupTranslate(id, original) {
   }
 }
 
-/* ================== TERJEMAHAN JUDUL ================== */
-const TRJ_KEY = "manhwahub-judul-v1";
-let titleCache = {};
-try { titleCache = JSON.parse(localStorage.getItem(TRJ_KEY) || "{}"); } catch (e) { titleCache = {}; }
-const titleInflight = new Set();
-let titleTimer = null;
-function fillOrigTitle() {
-  const ot = $("#orig-title");
-  if (ot && ot.dataset.oid && titleCache[ot.dataset.oid] && titleCache[ot.dataset.oid] !== ot.dataset.origfull) {
-    ot.textContent = "Judul asli: " + ot.dataset.origfull;
-  }
-}
-async function runTitleTranslation() {
-  const need = new Map();
-  $$("[data-tid]").forEach((el) => {
-    const id = el.dataset.tid, orig = el.dataset.orig;
-    if (!id || !orig) return;
-    if (titleCache[id]) { if (el.textContent !== titleCache[id]) el.textContent = titleCache[id]; }
-    else if (!titleInflight.has(id)) need.set(id, orig);
-  });
-  fillOrigTitle();
-  if (!need.size) return;
-  const ids = Array.from(need.keys()).slice(0, 40);
-  ids.forEach((id) => titleInflight.add(id));
-  try {
-    const r = await fetch("/api/translate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: ids.map((id) => need.get(id)) }) });
-    if (!r.ok) throw new Error("gagal");
-    const j = await r.json();
-    const arr = Array.isArray(j.translated) ? j.translated : [j.translated];
-    ids.forEach((id, i) => { if (arr[i]) titleCache[id] = arr[i]; });
-    try { localStorage.setItem(TRJ_KEY, JSON.stringify(titleCache)); } catch (e) {}
-    $$("[data-tid]").forEach((el) => { const t = titleCache[el.dataset.tid]; if (t && el.textContent !== t) el.textContent = t; });
-    fillOrigTitle();
-    if (need.size > ids.length) scheduleTitleTranslation();
-  } catch (e) { /* diam, judul asli tetap tampil */ }
-  finally { ids.forEach((id) => titleInflight.delete(id)); }
-}
-function scheduleTitleTranslation() {
-  clearTimeout(titleTimer);
-  titleTimer = setTimeout(runTitleTranslation, 350);
-}
-new MutationObserver(() => scheduleTitleTranslation()).observe(document.body, { childList: true, subtree: true });
-
 /* ================== DETAIL ================== */
 function refreshSaveButtons() {
   $$(".savebtn").forEach((b) => {
@@ -709,9 +666,8 @@ async function openDetail(m) {
       <button class="x" id="mx"><svg class="ic"><use href="#i-x"/></svg></button>
     </div>
     <div class="body">
-      <h2 data-tid="${m.id}" data-orig="${esc(title(m))}">${esc(title(m))}</h2>
+      <h2>${esc(title(m))}</h2>
       <div class="alt">${esc(m.title.romaji || "")}${m.startDate && m.startDate.year ? " · " + m.startDate.year : ""} · Manhwa</div>
-      <div class="alt" id="orig-title" data-oid="${m.id}" data-origfull="${esc(title(m))}"></div>
       <div class="stats">
         <i><svg class="ic"><use href="#i-star"/></svg>${score(m)} / 10</i>
         <i>${m.chapters ? m.chapters + " chapter" : "Chapter ?"}</i>
