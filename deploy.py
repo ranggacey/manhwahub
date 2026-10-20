@@ -22,7 +22,7 @@ def req(method, url, data=None, headers=None, raw=False):
         print("HTTP", e.code, e.read().decode()[:400]); sys.exit(1)
 
 files_meta = []
-for fname in ["index.html", "api/anilist.js", "api/translate.js"]:
+for fname in ["index.html", "api/anilist.js", "api/translate.js", "favicon.svg", "favicon.png", "apple-touch-icon.png"]:
     blob = open(os.path.join(ROOT, fname), "rb").read()
     sha = hashlib.sha1(blob).hexdigest()
     req("POST", f"https://api.vercel.com/v2/files?teamId={TEAM}", data=blob, raw=True,
