@@ -13,15 +13,28 @@ export default async function handler(req, res) {
     res.status(405).json({ error: "POST only" });
     return;
   }
-  const q = ((req.body || {}).q || "").toString().slice(0, 4500);
-  if (!q.trim()) {
+  const q = (req.body || {}).q;
+  // mode batch: q = ["judul 1", "judul 2", ...] -> { translated: [...] }
+  if (Array.isArray(q)) {
+    try {
+      const items = q.slice(0, 40).map((s) => String(s == null ? "" : s).slice(0, 300));
+      const translated = await Promise.all(items.map((t) => (t.trim() ? translateChunk(t).catch(() => t) : t)));
+      res.setHeader("Cache-Control", "private, max-age=86400");
+      res.status(200).json({ translated });
+    } catch (e) {
+      res.status(502).json({ error: "translate failed" });
+    }
+    return;
+  }
+  const text = (q || "").toString().slice(0, 4500);
+  if (!text.trim()) {
     res.status(400).json({ error: "empty" });
     return;
   }
   try {
     // potong per ~1200 char di batas kalimat biar endpoint Google nyaman
     const chunks = [];
-    let rest = q;
+    let rest = text;
     while (rest.length > 1200) {
       let cut = rest.lastIndexOf(". ", 1200);
       if (cut < 400) cut = 1200;
