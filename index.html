@@ -4,481 +4,721 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ManhwaHub — Jelajahi Manhwa</title>
-<meta name="description" content="Jelajahi manhwa populer, simpan ke library, dan tandai progress bacaanmu. Data dari AniList.">
+<meta name="description" content="Jelajahi manhwa populer, simpan ke pustaka, dan tandai progress bacaanmu. Data dari AniList.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0c0c10; --bg2:#141419; --card:#17171f; --line:#26262f;
-    --txt:#f4f2f7; --mut:#9b97a8; --acc:#ff5e7a; --acc2:#8e6fa8;
-    --gold:#e9d6b2; --radius:18px;
+    --paper:#f6f1e7; --paper2:#efe7d7; --card:#fffdf6; --line:#e3d9c3;
+    --ink:#2f3d35; --mut:#7c8a7f; --sage:#4f7a63; --sage2:#7fa88f;
+    --sky:#6f9bb8; --skysoft:#dcebf3; --gold:#c2a05e; --pink:#e3a7b8;
+    --bad:#c05b6d; --shadow:0 10px 30px rgba(84,72,44,.12);
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%}
+  html{scroll-behavior:smooth}
   body{
-    background:#060608; color:var(--txt);
+    background:#e9e2cf; color:var(--ink);
     font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     display:flex; justify-content:center;
   }
-  #app{width:100%; max-width:480px; min-height:100dvh; background:var(--bg); position:relative; display:flex; flex-direction:column; box-shadow:0 0 60px rgba(0,0,0,.6)}
+  .serif{font-family:"Cormorant Garamond",Georgia,serif}
+  #app{width:100%; max-width:480px; min-height:100dvh; background:
+    radial-gradient(120% 340px at 50% -60px, #fdfaf1 0%, var(--paper) 60%),
+    var(--paper);
+    position:relative; display:flex; flex-direction:column; box-shadow:0 0 70px rgba(60,50,25,.25)}
+  svg.ic{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+  svg.ic.sm{width:17px;height:17px}
+  svg.ic.lg{width:26px;height:26px}
+
+  /* ---------- HEADER ---------- */
   header{
-    position:sticky; top:0; z-index:40; padding:14px 18px 10px;
-    background:linear-gradient(180deg, rgba(12,12,16,.97), rgba(12,12,16,.88) 70%, transparent);
+    position:sticky; top:0; z-index:50; padding:12px 16px 9px;
+    background:linear-gradient(180deg, rgba(248,244,233,.97), rgba(248,244,233,.9) 72%, rgba(248,244,233,0));
     backdrop-filter:blur(8px);
   }
-  .brand{display:flex; align-items:baseline; gap:8px}
-  .brand h1{font-size:22px; font-weight:800; letter-spacing:.2px}
-  .brand h1 span{color:var(--acc)}
-  .brand small{color:var(--mut); font-size:11px}
-  main{flex:1; position:relative}
-  section.view{display:none; animation:fade .25s ease}
+  .hrow{display:flex; align-items:center; gap:10px}
+  .logo{display:flex; align-items:center; gap:9px; flex:1; min-width:0}
+  .logo .mark{width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,#5d8a6f,#3f6650);display:grid;place-items:center;color:#f3e9cf;box-shadow:var(--shadow)}
+  .logo .mark svg{width:23px;height:23px}
+  .logo h1{font-family:"Cormorant Garamond",serif; font-size:26px; font-weight:700; letter-spacing:.3px; line-height:1}
+  .logo h1 span{color:var(--sage)}
+  .logo small{display:block; font-family:"Plus Jakarta Sans"; font-size:10px; color:var(--mut); letter-spacing:1.6px; text-transform:uppercase; margin-top:2px}
+  .hbtn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--sage);display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 10px rgba(84,72,44,.08)}
+  .hbtn:active{transform:scale(.93)}
+
+  main{flex:1}
+  section.view{display:none; animation:fade .25s ease; padding-bottom:20px}
   section.view.active{display:block}
-  @keyframes fade{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+  @keyframes fade{from{opacity:0; transform:translateY(5px)} to{opacity:1; transform:none}}
+  .secttl{display:flex; align-items:baseline; justify-content:space-between; padding:20px 18px 10px}
+  .secttl h2{font-family:"Cormorant Garamond",serif; font-size:23px; font-weight:700}
+  .secttl h2 i{color:var(--gold); font-style:normal}
+  .secttl button{background:none;border:none;color:var(--sage);font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit}
 
-  /* ---------- FEED ---------- */
-  .sortchips{display:flex; gap:8px; padding:4px 18px 12px; overflow-x:auto; scrollbar-width:none}
-  .sortchips::-webkit-scrollbar{display:none}
-  .chip{flex:0 0 auto; padding:7px 14px; border-radius:999px; border:1px solid var(--line); background:var(--bg2); color:var(--mut); font-size:12.5px; font-weight:600; cursor:pointer}
-  .chip.on{background:var(--acc); border-color:var(--acc); color:#fff}
-  #feed{height:calc(100dvh - 210px); overflow-y:auto; scroll-snap-type:y mandatory; scrollbar-width:none; border-radius:0}
-  #feed::-webkit-scrollbar{display:none}
-  .fcard{
-    position:relative; height:100%; scroll-snap-align:start; overflow:hidden;
-    background:#000; cursor:pointer;
-  }
-  .fcard img.bg{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 22%}
-  .fcard .shade{position:absolute; inset:0; background:linear-gradient(180deg, rgba(6,6,10,.28) 0%, rgba(6,6,10,0) 34%, rgba(6,6,10,.55) 62%, rgba(6,6,10,.96) 88%)}
-  .fcard .top{position:absolute; top:14px; left:16px; right:16px; display:flex; justify-content:space-between; align-items:center}
-  .badge{font-size:11px; font-weight:700; padding:5px 10px; border-radius:999px; background:rgba(10,10,14,.55); border:1px solid rgba(255,255,255,.18); backdrop-filter:blur(6px)}
-  .badge.score{color:#ffd166}
-  .fcard .info{position:absolute; left:0; right:0; bottom:0; padding:18px 18px 20px}
-  .fcard h2{font-size:25px; line-height:1.15; font-weight:800; text-shadow:0 2px 14px rgba(0,0,0,.5)}
-  .meta{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0}
-  .meta i{font-style:normal; font-size:11.5px; color:#e8e4f0; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.14); padding:4px 9px; border-radius:999px; backdrop-filter:blur(4px)}
-  .meta i.hot{color:#ffb3c0; border-color:rgba(255,94,122,.4)}
-  .syn{color:#d9d5e2; font-size:13.5px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden}
-  .actions{display:flex; gap:9px; margin-top:14px}
-  .btn{flex:1; border:none; cursor:pointer; font-weight:700; font-size:13.5px; padding:12px 10px; border-radius:12px; background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.16); backdrop-filter:blur(6px)}
-  .btn.primary{background:var(--acc); border-color:var(--acc)}
-  .btn.saved{background:#2e7d4f; border-color:#2e7d4f}
-  .btn:active{transform:scale(.97)}
-  .hint-swipe{text-align:center; color:var(--mut); font-size:11px; padding:8px 0 2px; animation:bob 1.8s ease-in-out infinite}
-  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+  /* ---------- HERO ---------- */
+  .hero{position:relative; margin:6px 14px 0; border-radius:22px; overflow:hidden; box-shadow:var(--shadow); border:1px solid var(--line); background:#dfe9e2}
+  .hero .track{display:flex; transition:transform .55s cubic-bezier(.6,.05,.2,1)}
+  .hslide{position:relative; flex:0 0 100%; height:228px; cursor:pointer}
+  .hslide img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 26%}
+  .hslide .sh{position:absolute; inset:0; background:linear-gradient(185deg, rgba(24,32,27,0) 34%, rgba(24,32,27,.42) 66%, rgba(20,28,23,.88))}
+  .hslide .cap{position:absolute; left:16px; right:16px; bottom:13px; color:#fdfbf3}
+  .hslide .kick{font-size:10px; letter-spacing:2.2px; font-weight:800; color:var(--gold); text-transform:uppercase; display:flex; align-items:center; gap:6px}
+  .hslide h3{font-family:"Cormorant Garamond",serif; font-size:27px; font-weight:700; line-height:1.08; margin:4px 0 5px; text-shadow:0 2px 12px rgba(0,0,0,.35)}
+  .hslide .mm{display:flex; gap:6px; flex-wrap:wrap}
+  .hslide .mm i{font-style:normal; font-size:10.5px; font-weight:700; background:rgba(255,253,246,.2); border:1px solid rgba(255,253,246,.35); padding:3px 8px; border-radius:999px; backdrop-filter:blur(3px)}
+  .dots{position:absolute; right:14px; bottom:14px; display:flex; gap:5px; z-index:3}
+  .dots b{width:6px;height:6px;border-radius:99px;background:rgba(255,253,246,.45); transition:.3s; cursor:pointer}
+  .dots b.on{width:18px; background:var(--gold)}
 
-  /* ---------- GRID ---------- */
-  .searchbar{padding:2px 18px 12px; display:flex; gap:8px}
-  .searchbar input{
-    flex:1; background:var(--bg2); border:1px solid var(--line); color:var(--txt);
-    border-radius:12px; padding:11px 14px; font-size:14px; outline:none; font-family:inherit;
-  }
-  .searchbar input:focus{border-color:var(--acc2)}
-  .searchbar button{background:var(--acc); color:#fff; border:none; border-radius:12px; padding:0 16px; font-weight:700; cursor:pointer}
-  .grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; padding:2px 14px 24px}
-  .gcard{cursor:pointer}
-  .gcard .cov{position:relative; border-radius:14px; overflow:hidden; aspect-ratio:3/4.2; background:var(--card)}
-  .gcard img{width:100%; height:100%; object-fit:cover; display:block}
-  .gcard .sc{position:absolute; top:6px; left:6px; font-size:10.5px; font-weight:800; color:#ffd166; background:rgba(8,8,12,.65); padding:3px 7px; border-radius:8px}
-  .gcard h3{font-size:12.5px; font-weight:700; line-height:1.3; margin-top:7px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
-  .gcard p{font-size:11px; color:var(--mut); margin-top:2px}
+  /* ---------- ROWS ---------- */
+  .hrow-scroll{display:flex; gap:13px; overflow-x:auto; padding:4px 18px 8px; scrollbar-width:none; scroll-snap-type:x proximity}
+  .hrow-scroll::-webkit-scrollbar{display:none}
+  .mcard{flex:0 0 118px; scroll-snap-align:start; cursor:pointer}
+  .mcard .cov{position:relative; border-radius:15px; overflow:hidden; aspect-ratio:3/4.15; background:#e7dfca; border:1px solid var(--line); box-shadow:0 6px 16px rgba(84,72,44,.10)}
+  .mcard img{width:100%; height:100%; object-fit:cover; display:block}
+  .mcard .sc{position:absolute; top:6px; left:6px; display:flex; align-items:center; gap:3px; font-size:10.5px; font-weight:800; color:#8a6a1f; background:rgba(255,251,238,.92); padding:3px 7px; border-radius:8px}
+  .mcard .sc svg{width:11px;height:11px;stroke:#c2a05e;fill:#c2a05e}
+  .mcard h4{font-size:12.5px; font-weight:700; line-height:1.3; margin-top:7px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+  .mcard p{font-size:11px; color:var(--mut); margin-top:2px}
+  .mcard .bar{height:5px; background:#e8dfc9; border-radius:99px; margin-top:6px; overflow:hidden}
+  .mcard .bar i{display:block; height:100%; background:linear-gradient(90deg,var(--sage2),var(--sage)); border-radius:99px}
 
-  /* ---------- LIBRARY ---------- */
-  .libwrap{padding:4px 16px 26px; display:flex; flex-direction:column; gap:12px}
-  .lrow{display:flex; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:10px; align-items:center}
-  .lrow img{width:52px; height:74px; object-fit:cover; border-radius:10px; flex:0 0 auto}
+  /* ---------- CHIPS ---------- */
+  .chips{display:flex; gap:8px; overflow-x:auto; padding:4px 18px 6px; scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:8px 13px; border-radius:999px; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit}
+  .chip svg{width:14px;height:14px;stroke:var(--sage)}
+  .chip.on{background:var(--sage); border-color:var(--sage); color:#fff}
+  .chip.on svg{stroke:#fff}
+
+  /* ---------- GRID / JELAJAH ---------- */
+  .searchbar{padding:6px 16px 10px; display:flex; gap:8px}
+  .searchbar .wrap{flex:1; display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line); border-radius:13px; padding:0 12px}
+  .searchbar .wrap svg{stroke:var(--mut); width:18px; height:18px}
+  .searchbar input{flex:1; border:none; background:none; color:var(--ink); padding:12px 0; font-size:14px; outline:none; font-family:inherit}
+  .searchbar button{background:var(--sage); color:#fff; border:none; border-radius:13px; padding:0 17px; font-weight:700; cursor:pointer; font-family:inherit}
+  .filters{display:flex; gap:8px; padding:0 16px 12px}
+  .filters select{flex:1; background:var(--card); border:1px solid var(--line); color:var(--ink); border-radius:11px; padding:9px 8px; font-size:12.5px; font-family:inherit; outline:none}
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px 12px; padding:2px 14px 10px}
+  .grid .mcard{flex:none; width:auto}
+  .loadmore{text-align:center; padding:14px; color:var(--mut); font-size:12.5px}
+
+  /* ---------- TOP 10 ---------- */
+  .top10{padding:6px 16px 8px; display:flex; flex-direction:column; gap:11px}
+  .trow{display:flex; align-items:center; gap:13px; background:var(--card); border:1px solid var(--line); border-radius:17px; padding:10px 13px 10px 8px; cursor:pointer; box-shadow:0 4px 14px rgba(84,72,44,.06)}
+  .trow .no{font-family:"Cormorant Garamond",serif; font-size:37px; font-weight:700; width:44px; text-align:center; color:#cbbd97; line-height:1}
+  .trow:nth-child(1) .no{color:#c2a05e} .trow:nth-child(2) .no{color:#9aa5a1} .trow:nth-child(3) .no{color:#c08a5e}
+  .trow img{width:47px; height:66px; object-fit:cover; border-radius:9px}
+  .trow .mid{flex:1; min-width:0}
+  .trow h4{font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .trow p{font-size:11.5px; color:var(--mut); margin-top:3px; display:flex; align-items:center; gap:5px}
+  .trow p svg{width:12px;height:12px;stroke:var(--gold);fill:var(--gold)}
+  .trow .chev{color:#c9bfa4}
+
+  /* ---------- PUSTAKA ---------- */
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:14px 16px 4px}
+  .stat{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:13px 8px; text-align:center; box-shadow:0 4px 12px rgba(84,72,44,.05)}
+  .stat b{font-family:"Cormorant Garamond",serif; font-size:26px; display:block; line-height:1}
+  .stat span{font-size:10px; color:var(--mut); letter-spacing:.8px; text-transform:uppercase; font-weight:700}
+  .libtabs{display:flex; gap:8px; padding:14px 16px 4px}
+  .libtabs button{flex:1; padding:9px 0; border-radius:11px; border:1px solid var(--line); background:var(--card); font-weight:700; font-size:12.5px; color:var(--mut); cursor:pointer; font-family:inherit}
+  .libtabs button.on{background:var(--sage); color:#fff; border-color:var(--sage)}
+  .libwrap{padding:12px 16px 24px; display:flex; flex-direction:column; gap:11px}
+  .lrow{display:flex; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:17px; padding:10px; align-items:center; box-shadow:0 4px 12px rgba(84,72,44,.05)}
+  .lrow img{width:52px; height:74px; object-fit:cover; border-radius:10px; flex:0 0 auto; cursor:pointer}
   .lrow .mid{flex:1; min-width:0}
-  .lrow h3{font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  .lrow .sub{font-size:11.5px; color:var(--mut); margin:3px 0 8px}
-  .lrow select{background:var(--bg2); color:var(--txt); border:1px solid var(--line); border-radius:8px; font-size:12px; padding:5px 7px; font-family:inherit}
+  .lrow h3{font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer}
+  .lrow .sub{font-size:11.5px; color:var(--mut); margin:3px 0 7px}
+  .lrow .bar{height:6px; background:#ece3cd; border-radius:99px; overflow:hidden; margin-bottom:8px}
+  .lrow .bar i{display:block; height:100%; background:linear-gradient(90deg,var(--sage2),var(--sage))}
+  .lrow select{background:var(--paper); color:var(--ink); border:1px solid var(--line); border-radius:8px; font-size:12px; padding:5px 7px; font-family:inherit}
   .stepper{display:flex; align-items:center; gap:8px}
-  .stepper button{width:27px; height:27px; border-radius:9px; border:1px solid var(--line); background:var(--bg2); color:#fff; font-size:16px; cursor:pointer; line-height:1}
-  .stepper b{font-size:13px; min-width:58px; text-align:center}
-  .del{background:none; border:none; color:#ff7d92; font-size:18px; cursor:pointer; padding:6px}
-  .empty{padding:56px 30px; text-align:center; color:var(--mut); font-size:14px; line-height:1.7}
-  .empty .big{font-size:38px; display:block; margin-bottom:10px}
+  .stepper button{width:27px; height:27px; border-radius:9px; border:1px solid var(--line); background:var(--paper); color:var(--sage); font-size:16px; font-weight:800; cursor:pointer; line-height:1; display:grid; place-items:center}
+  .stepper b{font-size:12.5px; min-width:56px; text-align:center}
+  .del{background:none; border:none; color:var(--bad); cursor:pointer; padding:6px; display:grid; place-items:center}
+  .del svg{width:19px;height:19px}
+  .empty{padding:52px 30px; text-align:center; color:var(--mut); font-size:14px; line-height:1.7}
+  .empty .eic{width:64px;height:64px;margin:0 auto 12px;border-radius:50%;background:var(--paper2);display:grid;place-items:center;color:var(--sage2)}
+  .empty .eic svg{width:30px;height:30px}
 
   /* ---------- STATES ---------- */
-  .loading{padding:60px 20px; text-align:center; color:var(--mut); font-size:14px}
-  .spinner{width:34px; height:34px; border-radius:50%; border:3px solid var(--line); border-top-color:var(--acc); margin:0 auto 14px; animation:spin .8s linear infinite}
+  .loading{padding:56px 20px; text-align:center; color:var(--mut); font-size:14px}
+  .spinner{width:34px; height:34px; border-radius:50%; border:3px solid var(--line); border-top-color:var(--sage); margin:0 auto 14px; animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .errbox{margin:20px 16px; background:#2a1420; border:1px solid #57283c; color:#ffb3c0; border-radius:14px; padding:16px; font-size:13.5px; line-height:1.6}
-  .errbox button{margin-top:10px; background:var(--acc); border:none; color:#fff; font-weight:700; padding:9px 16px; border-radius:10px; cursor:pointer}
+  .errbox{margin:16px; background:#f9ecec; border:1px solid #e3c3c9; color:#8c4353; border-radius:14px; padding:15px; font-size:13.5px; line-height:1.6}
+  .errbox button{margin-top:9px; background:var(--sage); border:none; color:#fff; font-weight:700; padding:9px 15px; border-radius:10px; cursor:pointer; font-family:inherit}
 
   /* ---------- NAV ---------- */
-  nav{
-    position:sticky; bottom:0; z-index:40; display:flex; background:rgba(16,16,22,.96);
-    border-top:1px solid var(--line); backdrop-filter:blur(10px); padding-bottom:env(safe-area-inset-bottom);
-  }
-  nav button{flex:1; background:none; border:none; color:var(--mut); padding:11px 0 9px; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit}
-  nav button .ic{display:block; font-size:20px; margin-bottom:2px}
-  nav button.on{color:var(--acc)}
+  nav{position:sticky; bottom:0; z-index:50; display:flex; background:rgba(255,253,246,.97); border-top:1px solid var(--line); backdrop-filter:blur(10px); padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1; background:none; border:none; color:#9aa294; padding:9px 0 8px; font-size:10.5px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; flex-direction:column; align-items:center; gap:2px}
+  nav button.on{color:var(--sage)}
+  nav button.on svg{stroke:var(--sage)}
 
   /* ---------- MODAL ---------- */
-  #modal{position:fixed; inset:0; z-index:80; display:none; align-items:flex-end; justify-content:center; background:rgba(4,4,8,.66)}
+  #modal{position:fixed; inset:0; z-index:90; display:none; align-items:flex-end; justify-content:center; background:rgba(38,34,22,.5)}
   #modal.open{display:flex}
-  .sheet{
-    width:100%; max-width:480px; max-height:88dvh; overflow-y:auto; background:var(--bg2);
-    border-radius:22px 22px 0 0; border:1px solid var(--line); animation:up .28s ease;
-  }
+  .sheet{width:100%; max-width:480px; max-height:90dvh; overflow-y:auto; background:var(--paper); border-radius:24px 24px 0 0; border:1px solid var(--line); animation:up .28s ease}
   @keyframes up{from{transform:translateY(36px); opacity:.4} to{transform:none; opacity:1}}
-  .sheet .banner{height:150px; background-size:cover; background-position:center 30%; position:relative}
-  .sheet .banner::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg, transparent, var(--bg2))}
-  .sheet .x{position:absolute; top:12px; right:12px; z-index:2; width:34px; height:34px; border-radius:50%; border:none; background:rgba(8,8,12,.6); color:#fff; font-size:17px; cursor:pointer}
-  .sheet .body{padding:4px 20px 26px; margin-top:-34px; position:relative}
-  .sheet .body h2{font-size:21px; line-height:1.25; padding-right:8px}
+  .sheet .banner{height:158px; background-size:cover; background-position:center 28%; position:relative}
+  .sheet .banner::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(30,26,16,.12), transparent 40%, var(--paper))}
+  .sheet .x{position:absolute; top:12px; right:12px; z-index:2; width:34px; height:34px; border-radius:50%; border:none; background:rgba(30,26,16,.45); color:#fff; cursor:pointer; display:grid; place-items:center}
+  .sheet .x svg{width:17px;height:17px}
+  .sheet .body{padding:2px 20px 26px; margin-top:-30px; position:relative}
+  .sheet h2{font-family:"Cormorant Garamond",serif; font-size:26px; line-height:1.15; font-weight:700}
   .sheet .alt{color:var(--mut); font-size:12px; margin-top:3px}
-  .sheet .stats{display:flex; gap:8px; flex-wrap:wrap; margin:13px 0}
-  .sheet .stats i{font-style:normal; font-size:12px; background:var(--card); border:1px solid var(--line); padding:6px 10px; border-radius:10px}
-  .sheet .desc{font-size:13.5px; line-height:1.65; color:#ddd9e6}
-  .sheet h4{font-size:13px; letter-spacing:.6px; text-transform:uppercase; color:var(--mut); margin:18px 0 9px}
+  .sheet .stats{display:flex; gap:7px; flex-wrap:wrap; margin:13px 0}
+  .sheet .stats i{font-style:normal; font-size:12px; font-weight:600; background:var(--card); border:1px solid var(--line); padding:6px 10px; border-radius:10px; display:flex; align-items:center; gap:5px}
+  .sheet .stats i svg{width:13px;height:13px;stroke:var(--gold);fill:var(--gold)}
+  .sheet .desc{font-size:13.5px; line-height:1.68; color:#4a554d}
+  .sheet h4{font-family:"Cormorant Garamond",serif; font-size:19px; font-weight:700; margin:19px 0 10px; color:var(--ink)}
+  .chars{display:flex; gap:11px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px}
+  .chars::-webkit-scrollbar{display:none}
+  .char{flex:0 0 62px; text-align:center}
+  .char img{width:62px; height:62px; border-radius:50%; object-fit:cover; border:2px solid var(--line); background:#e7dfca}
+  .char p{font-size:10.5px; color:var(--mut); margin-top:5px; line-height:1.25}
   .links{display:flex; flex-direction:column; gap:8px}
-  .links a{display:flex; justify-content:space-between; align-items:center; background:var(--card); border:1px solid var(--line); color:var(--txt); text-decoration:none; padding:12px 14px; border-radius:12px; font-size:14px; font-weight:600}
-  .links a small{color:var(--acc); font-weight:700}
-  .sheet .rowbtns{display:flex; gap:9px; margin-top:18px}
-  .sheet .rowbtns .btn{backdrop-filter:none}
-  .prog{display:flex; align-items:center; gap:10px; margin-top:14px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 12px}
+  .links a{display:flex; justify-content:space-between; align-items:center; background:var(--card); border:1px solid var(--line); color:var(--ink); text-decoration:none; padding:12px 14px; border-radius:12px; font-size:14px; font-weight:600}
+  .links a small{color:var(--sage); font-weight:800; display:flex; align-items:center; gap:4px}
+  .links a small svg{width:14px;height:14px}
+  .rowbtns{display:flex; gap:9px; margin-top:17px}
+  .btn{flex:1; border:1px solid var(--line); cursor:pointer; font-weight:700; font-size:13.5px; padding:12px 10px; border-radius:13px; background:var(--card); color:var(--sage); font-family:inherit; display:flex; align-items:center; justify-content:center; gap:7px}
+  .btn svg{width:17px;height:17px}
+  .btn.primary{background:var(--sage); border-color:var(--sage); color:#fff}
+  .btn.primary svg{stroke:#fff}
+  .btn.saved{background:#e8efe4; border-color:#c9d8bd; color:#44603c}
+  .btn:active{transform:scale(.97)}
+  .prog{display:flex; align-items:center; gap:10px; margin-top:14px; background:var(--card); border:1px solid var(--line); border-radius:13px; padding:10px 12px}
   .prog span{font-size:12.5px; color:var(--mut); flex:1}
+  .recs{display:grid; grid-template-columns:repeat(3,1fr); gap:11px}
+  .recs .mcard{width:auto}
+
+  /* ---------- TOAST ---------- */
+  #toast{position:fixed; left:50%; bottom:86px; transform:translate(-50%, 20px); background:#2f3d35; color:#f6f1e7; font-size:13px; font-weight:600; padding:11px 18px; border-radius:999px; box-shadow:0 12px 30px rgba(30,26,16,.3); opacity:0; pointer-events:none; transition:.3s; z-index:120; display:flex; gap:8px; align-items:center; max-width:88vw}
+  #toast.show{opacity:1; transform:translate(-50%, 0)}
+  #toast svg{width:16px;height:16px;stroke:var(--gold)}
+  footer.note{padding:16px 20px 26px; text-align:center; color:#a89a76; font-size:11px; line-height:1.7}
 </style>
 </head>
 <body>
+
+<!-- ====== IKON SVG GAMBAR SENDIRI (sprite) ====== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4.5C6.8 3.6 9 3.4 12 5c3-1.6 5.2-1.4 7-.5v13c-1.8-.9-4-1.1-7 .5-3-1.6-5.2-1.4-7-.5z"/><path d="M12 5v13"/><path d="M17.5 2.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-6.5L20 11"/><path d="M6 9.5V20h12V9.5"/><path d="M12 20v-5.2"/><path d="M15.8 12.2c.9-.6 2-.5 2.7.2-.1 1.1-.8 1.9-1.9 2-.9.6-2 .5-2.7-.2.1-1.1.8-1.9 1.9-2z"/></symbol>
+    <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/><circle cx="12" cy="12" r=".6"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 5.5H5a3 3 0 0 0 3 4.5M16 5.5h3a3 3 0 0 1-3 4.5"/><path d="M12 13v3M8.5 20h7M12 16c-1.2 1-1.8 2.2-1.9 4h3.8c-.1-1.8-.7-3-1.9-4z"/></symbol>
+    <symbol id="i-shelf" viewBox="0 0 24 24"><path d="M4.5 5.5A1.5 1.5 0 0 1 6 4h13v15H6a1.5 1.5 0 0 0-1.5 1.5z"/><path d="M4.5 20.5V5.5"/><path d="M9 8.5h6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M4 7h4l3 4 2.5 3.2A3 3 0 0 0 15.9 16H20"/><path d="M17.5 13.8L20 16l-2.5 2.2"/><path d="M4 17h4l1.8-2.2M13.7 9.8A3 3 0 0 1 15.9 8H20"/><path d="M17.5 5.8L20 8l-2.5 2.2"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 4l2.3 4.9 5.2.6-3.8 3.6 1 5.2L12 15.7l-4.7 2.6 1-5.2-3.8-3.6 5.2-.6z"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3.5c.6 3.2-1.2 4.8-2.6 6.2C7.9 11.2 7 12.6 7 14.5A5 5 0 0 0 17 14.5c0-1.6-.6-2.8-1.4-4-.3 1-.9 1.7-1.8 2.1.3-2.9-.4-6.4-1.8-9.1z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5.5 18.5C5.5 10 11 4.8 19.5 4.5c.3 8.5-4.9 14-13 14.5"/><path d="M5.5 18.5C7 13 10.5 9 15 6.5"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M11 4l1.1 4.9L17 10l-4.9 1.1L11 16l-1.1-4.9L5 10l4.9-1.1z"/><path d="M18.5 15.5l.6 2.4 2.4.6-2.4.6-.6 2.4-.6-2.4-2.4-.6 2.4-.6z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.8l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4.5h5.5V10"/><path d="M19.5 4.5L11 13"/><path d="M19 13.5V19a1.5 1.5 0 0 1-1.5 1.5h-12A1.5 1.5 0 0 1 4 19V7a1.5 1.5 0 0 1 1.5-1.5H11"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 6.5h15M9.5 6V4.8A.8.8 0 0 1 10.3 4h3.4a.8.8 0 0 1 .8.8V6"/><path d="M6.5 6.5l.8 12A1.5 1.5 0 0 0 8.8 20h6.4a1.5 1.5 0 0 0 1.5-1.5l.8-12"/><path d="M10 10.5v6M14 10.5v6"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9.5 5.5L16 12l-6.5 6.5"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="6.5" cy="12" r="2.5"/><circle cx="17" cy="5.8" r="2.5"/><circle cx="17" cy="18.2" r="2.5"/><path d="M8.8 10.8l6-3.8M8.8 13.2l6 3.8"/></symbol>
+    <symbol id="i-quill" viewBox="0 0 24 24"><path d="M19.5 4.5c-5 .8-10.5 4.3-12.7 10.2L4 20l5.3-2.8C15.2 15 18.7 9.5 19.5 4.5z"/><path d="M7 15.5C9.5 11 13 7.8 17.5 6"/></symbol>
+  </defs>
+</svg>
+
 <div id="app">
   <header>
-    <div class="brand">
-      <h1>Manhwa<span>Hub</span></h1>
-      <small>manhwa pilihan · data AniList</small>
+    <div class="hrow">
+      <div class="logo">
+        <div class="mark"><svg class="ic"><use href="#i-book"/></svg></div>
+        <div>
+          <h1>Manhwa<span>Hub</span></h1>
+          <small>Perpustakaan Manhwa</small>
+        </div>
+      </div>
+      <button class="hbtn" id="btn-acak" title="Manhwa acak"><svg class="ic"><use href="#i-shuffle"/></svg></button>
+      <button class="hbtn" id="btn-cari" title="Cari manhwa"><svg class="ic"><use href="#i-search"/></svg></button>
     </div>
   </header>
 
   <main>
-    <!-- JELAJAH / FEED -->
-    <section id="view-feed" class="view active">
-      <div class="sortchips" id="sortchips">
-        <button class="chip on" data-sort="TRENDING_DESC">🔥 Trending</button>
-        <button class="chip" data-sort="POPULARITY_DESC">👥 Populer</button>
-        <button class="chip" data-sort="SCORE_DESC">⭐ Skor Tertinggi</button>
-        <button class="chip" data-sort="UPDATED_AT_DESC">🆕 Baru Update</button>
+    <!-- ================= BERANDA ================= -->
+    <section id="view-home" class="view active">
+      <div id="hero" class="hero"><div class="loading"><div class="spinner"></div>Memuat sorotan…</div></div>
+
+      <div id="lanjut-wrap" style="display:none">
+        <div class="secttl"><h2><i>❧</i> Lanjut Baca</h2><button data-goto="view-lib">Pustaka →</button></div>
+        <div class="hrow-scroll" id="lanjut"></div>
       </div>
-      <div id="feed"><div class="loading"><div class="spinner"></div>Memuat manhwa…</div></div>
-      <div class="hint-swipe">geser ke atas buat lanjut ↓</div>
+
+      <div class="secttl"><h2><i>❧</i> Jelajahi Genre</h2></div>
+      <div class="chips" id="genre-chips"></div>
+
+      <div class="secttl"><h2><i>❧</i> Sedang Trending</h2><button data-goto="view-explore" data-sortlink="TRENDING_DESC">Lihat Semua →</button></div>
+      <div class="hrow-scroll" id="row-trending"><div class="loading">Memuat…</div></div>
+
+      <div class="secttl"><h2><i>❧</i> Skor Tertinggi</h2><button data-goto="view-explore" data-sortlink="SCORE_DESC">Lihat Semua →</button></div>
+      <div class="hrow-scroll" id="row-top"><div class="loading">Memuat…</div></div>
+
+      <div class="secttl"><h2><i>❧</i> Baru Diperbarui</h2><button data-goto="view-explore" data-sortlink="UPDATED_AT_DESC">Lihat Semua →</button></div>
+      <div class="hrow-scroll" id="row-fresh"><div class="loading">Memuat…</div></div>
+
+      <footer class="note">Semua data & gambar dari AniList. Tombol “Baca” mengarah ke sumber resmi (WEBTOON, Tapas, Lezhin, dll) — dukung kreatornya ya.</footer>
     </section>
 
-    <!-- POPULER / GRID + SEARCH -->
-    <section id="view-grid" class="view">
+    <!-- ================= JELAJAH ================= -->
+    <section id="view-explore" class="view">
       <div class="searchbar">
-        <input id="q" type="search" placeholder="Cari judul manhwa…" autocomplete="off">
+        <div class="wrap"><svg class="ic"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Cari judul manhwa…" autocomplete="off"></div>
         <button id="qbtn">Cari</button>
+      </div>
+      <div class="chips" id="genre-chips-2" style="padding-left:16px"></div>
+      <div class="filters">
+        <select id="f-status">
+          <option value="">Semua Status</option>
+          <option value="RELEASING">Berlangsung</option>
+          <option value="FINISHED">Tamat</option>
+          <option value="HIATUS">Hiatus</option>
+          <option value="NOT_YET_RELEASED">Belum Rilis</option>
+        </select>
+        <select id="f-sort">
+          <option value="TRENDING_DESC">Trending</option>
+          <option value="POPULARITY_DESC">Paling Populer</option>
+          <option value="SCORE_DESC">Skor Tertinggi</option>
+          <option value="UPDATED_AT_DESC">Baru Diperbarui</option>
+          <option value="START_DATE_DESC">Rilisan Terbaru</option>
+          <option value="TITLE_ROMAJI">Judul A–Z</option>
+        </select>
       </div>
       <div id="grid" class="grid"></div>
       <div id="gridstate"></div>
+      <div id="sentinel" class="loadmore"></div>
     </section>
 
-    <!-- LIBRARY -->
+    <!-- ================= TOP 10 ================= -->
+    <section id="view-top" class="view">
+      <div class="secttl"><h2><i>❧</i> 10 Manhwa Terpopuler</h2></div>
+      <div id="top10" class="top10"><div class="loading"><div class="spinner"></div>Memuat peringkat…</div></div>
+      <footer class="note">Berdasarkan jumlah pembaca di AniList, diperbarui otomatis.</footer>
+    </section>
+
+    <!-- ================= PUSTAKA ================= -->
     <section id="view-lib" class="view">
+      <div class="stats">
+        <div class="stat"><b id="st-total">0</b><span>Judul</span></div>
+        <div class="stat"><b id="st-ch">0</b><span>Chapter Dibaca</span></div>
+        <div class="stat"><b id="st-done">0</b><span>Tamat Dibaca</span></div>
+      </div>
+      <div class="libtabs" id="libtabs">
+        <button data-tab="Semua" class="on">Semua</button>
+        <button data-tab="Baca">Dibaca</button>
+        <button data-tab="Nanti">Nanti</button>
+        <button data-tab="Tamat">Tamat</button>
+      </div>
       <div id="lib" class="libwrap"></div>
     </section>
   </main>
 
   <nav>
-    <button data-view="view-feed" class="on"><span class="ic">🏠</span>Jelajah</button>
-    <button data-view="view-grid"><span class="ic">🔎</span>Populer</button>
-    <button data-view="view-lib"><span class="ic">📚</span>Library</button>
+    <button data-view="view-home" class="on"><svg class="ic"><use href="#i-home"/></svg>Beranda</button>
+    <button data-view="view-explore"><svg class="ic"><use href="#i-compass"/></svg>Jelajah</button>
+    <button data-view="view-top"><svg class="ic"><use href="#i-trophy"/></svg>Top 10</button>
+    <button data-view="view-lib"><svg class="ic"><use href="#i-shelf"/></svg>Pustaka</button>
   </nav>
 </div>
 
-<!-- DETAIL MODAL -->
-<div id="modal">
-  <div class="sheet" id="sheet"></div>
-</div>
+<div id="modal"><div class="sheet" id="sheet"></div></div>
+<div id="toast"></div>
 
 <script>
 "use strict";
+/* ================== DASAR ================== */
 const API = "https://graphql.anilist.co";
-const READ_SITES = ["WEBTOON","Tapas","Lezhin","Lezhin Comics","Manta","Tappytoon","Pocket Comics","INKR Comics","Web Comics","Toomics","Delitoon","Bilibili Comics"];
-
-const QUERY = `
-query ($page: Int, $perPage: Int, $sort: [MediaSort], $search: String) {
-  Page(page: $page, perPage: $perPage) {
-    pageInfo { hasNextPage currentPage }
-    media(type: MANGA, countryOfOrigin: "KR", sort: $sort, search: $search, isAdult: false) {
-      id
-      title { english romaji native }
-      coverImage { extraLarge }
-      bannerImage
-      description
-      averageScore
-      chapters
-      status
-      genres
-      startDate { year }
-      externalLinks { site url type }
-      siteUrl
-    }
-  }
-}`;
-
+const READ_SITES = ["WEBTOON","Tapas","Lezhin","Manta","Tappytoon","Pocket Comics","INKR","Toomics","Delitoon","Bilibili Comics","Web Comics"];
+const GENRES = [
+  ["Action","Aksi"],["Adventure","Petualangan"],["Comedy","Komedi"],["Drama","Drama"],
+  ["Fantasy","Fantasi"],["Horror","Horor"],["Martial Arts","Bela Diri"],["Mystery","Misteri"],
+  ["Psychological","Psikologis"],["Romance","Romansa"],["Sci-Fi","Fiksi Ilmiah"],
+  ["Slice of Life","Sehari-hari"],["Supernatural","Supranatural"],["Thriller","Thriller"],
+  ["Sports","Olahraga"],["Mecha","Mecha"]
+];
 const $ = (s, r) => (r || document).querySelector(s);
-const stripHtml = (h) => {
-  const d = document.createElement("div");
-  d.innerHTML = h || "";
-  return (d.textContent || "").replace(/\s+\n/g, " ").trim();
-};
-const title = (m) => (m.title.english || m.title.romaji || m.title.native || "Tanpa judul");
-const statusId = (s) => ({ RELEASING: "Ongoing", FINISHED: "Tamat", NOT_YET_RELEASED: "Belum Rilis", CANCELLED: "Batal", HIATUS: "Hiatus" }[s] || s || "-");
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const stripHtml = (h) => { const d = document.createElement("div"); d.innerHTML = h || ""; return (d.textContent || "").replace(/\s+/g, " ").trim(); };
+const title = (m) => (m.title.english || m.title.romaji || m.title.native || "Tanpa Judul");
+const statusId = (s) => ({ RELEASING: "Berlangsung", FINISHED: "Tamat", NOT_YET_RELEASED: "Belum Rilis", CANCELLED: "Batal", HIATUS: "Hiatus" }[s] || "-");
+const genreId = (g) => { const f = GENRES.find((x) => x[0] === g); return f ? f[1] : g; };
+const score = (m) => (m.averageScore ? (m.averageScore / 10).toFixed(1) : "-");
+function toast(msg, icon) {
+  const t = $("#toast");
+  t.innerHTML = `<svg class="ic"><use href="#${icon || "i-check"}"/></svg> ${esc(msg)}`;
+  t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2100);
+}
 
-/* ---------- library (localStorage) ---------- */
+/* ================== PUSTAKA (localStorage) ================== */
 const LS_KEY = "manhwahub-library-v1";
 let library = {};
 try { library = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch (e) { library = {}; }
-function saveLib() { localStorage.setItem(LS_KEY, JSON.stringify(library)); }
-function inLib(id) { return !!library[id]; }
+const saveLib = () => localStorage.setItem(LS_KEY, JSON.stringify(library));
+const inLib = (id) => !!library[id];
 function toggleLib(m) {
-  if (library[m.id]) { delete library[m.id]; }
+  if (library[m.id]) { delete library[m.id]; toast("Dihapus dari pustaka", "i-trash"); }
   else {
-    library[m.id] = {
-      id: m.id, title: title(m), cover: m.coverImage.extraLarge,
-      chapters: m.chapters || null, status: "Baca", progress: 0,
-      siteUrl: m.siteUrl,
-    };
+    library[m.id] = { id: m.id, title: title(m), cover: m.coverImage.extraLarge, chapters: m.chapters || null, status: "Baca", progress: 0, siteUrl: m.siteUrl };
+    toast("Ditambahkan ke pustaka", "i-shelf");
   }
   saveLib(); renderLib(); refreshSaveButtons();
 }
 
-/* ---------- AniList fetch (direct, fallback: same-origin proxy) ---------- */
-async function anilistFetch(payload) {
-  const opts = {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Accept": "application/json" },
-    body: JSON.stringify(payload),
-  };
+/* ================== API ================== */
+const FRAG = `fragment F on Media {
+  id title { english romaji native } coverImage { extraLarge } bannerImage
+  description averageScore chapters status genres startDate { year }
+  externalLinks { site url type } siteUrl
+}`;
+async function gql(query, variables) {
+  const opts = { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify({ query, variables }) };
   let res = null;
   try { res = await fetch(API, opts); } catch (e) { res = null; }
-  if (!res || res.status === 403) {
-    // jaringan pengunjung ga bisa nembus AniList langsung -> lewat proxy server sendiri
-    res = await fetch("/api/anilist", opts);
-  }
-  return res;
-}
-
-async function fetchPage({ page, perPage, sort, search }) {
-  const res = await anilistFetch({ query: QUERY, variables: { page, perPage, sort: [sort], search: search || null } });
-  if (res.status === 429) throw new Error("Kena rate limit AniList (terlalu sering). Tunggu ±1 menit lalu coba lagi ya.");
+  if (!res || res.status === 403) res = await fetch("/api/anilist", opts);
+  if (res.status === 429) throw new Error("Kena batas AniList (terlalu sering). Tunggu ±1 menit, lalu coba lagi ya.");
   if (!res.ok) throw new Error("AniList lagi bermasalah (HTTP " + res.status + "). Coba lagi nanti.");
   const json = await res.json();
   if (json.errors) throw new Error(json.errors[0].message || "Query error");
-  return json.data.Page;
+  return json.data;
 }
-
+const PAGE_Q = `query ($page: Int, $perPage: Int, $sort: [MediaSort], $search: String, $genre: String, $status: MediaStatus) {
+  Page(page: $page, perPage: $perPage) {
+    pageInfo { hasNextPage currentPage }
+    media(type: MANGA, countryOfOrigin: "KR", sort: $sort, search: $search, genre_in: $genre, status: $status, isAdult: false) { ...F }
+  }
+} ${FRAG}`;
+function fetchPage(v) {
+  return gql(PAGE_Q, { page: v.page, perPage: v.perPage, sort: [v.sort], search: v.search || null, genre: v.genre || null, status: v.status || null })
+    .then((d) => d.Page);
+}
 function readLink(m) {
   const links = m.externalLinks || [];
-  const hit = links.find((l) => READ_SITES.some((s) => (l.site || "").toLowerCase().includes(s.toLowerCase())));
-  return hit || links[0] || null;
+  return links.find((l) => READ_SITES.some((s) => (l.site || "").toLowerCase().includes(s.toLowerCase()))) || links[0] || null;
 }
 
-/* ---------- FEED ---------- */
-let feedState = { sort: "TRENDING_DESC", page: 0, hasNext: true, loading: false, items: [] };
-
-function feedCard(m) {
-  const el = document.createElement("article");
-  el.className = "fcard";
-  const link = readLink(m);
+/* ================== KARTU ================== */
+function miniCard(m, opts) {
+  opts = opts || {};
+  const el = document.createElement("div");
+  el.className = "mcard";
+  const pct = opts.progress != null && m.chapters ? Math.min(100, Math.round(opts.progress / m.chapters * 100)) : null;
   el.innerHTML = `
-    <img class="bg" src="${esc(m.coverImage.extraLarge)}" alt="" loading="lazy">
-    <div class="shade"></div>
-    <div class="top">
-      <span class="badge">${m.chapters ? m.chapters + " chapter" : "Chapter ?"}</span>
-      <span class="badge score">★ ${m.averageScore ? (m.averageScore / 10).toFixed(1) : "-"}</span>
-    </div>
-    <div class="info">
-      <h2>${esc(title(m))}</h2>
-      <div class="meta">
-        <i class="hot">${esc(statusId(m.status))}</i>
-        ${(m.genres || []).slice(0, 3).map((g) => `<i>${esc(g)}</i>`).join("")}
-        ${m.startDate && m.startDate.year ? `<i>${m.startDate.year}</i>` : ""}
-      </div>
-      <p class="syn">${esc(stripHtml(m.description) || "Belum ada sinopsis.")}</p>
-      <div class="actions">
-        <button class="btn savebtn ${inLib(m.id) ? "saved" : ""}" data-id="${m.id}">${inLib(m.id) ? "✓ Di Library" : "+ Library"}</button>
-        <button class="btn detailbtn" data-id="${m.id}">Detail</button>
-        ${link ? `<button class="btn primary readbtn" data-url="${esc(link.url)}">Baca ↗</button>` : ""}
-      </div>
-    </div>`;
-  el.querySelector(".savebtn").addEventListener("click", (e) => { e.stopPropagation(); toggleLib(m); });
-  el.querySelector(".detailbtn").addEventListener("click", (e) => { e.stopPropagation(); openDetail(m); });
-  const rb = el.querySelector(".readbtn");
-  if (rb) rb.addEventListener("click", (e) => { e.stopPropagation(); window.open(rb.dataset.url, "_blank", "noopener"); });
+    <div class="cov"><img src="${esc(m.coverImage.extraLarge)}" alt="" loading="lazy">
+      <span class="sc"><svg class="ic"><use href="#i-star"/></svg>${score(m)}</span></div>
+    <h4>${esc(title(m))}</h4>
+    <p>${m.chapters ? m.chapters + " chapter" : "? chapter"} · ${esc(statusId(m.status))}</p>
+    ${pct != null ? `<div class="bar"><i style="width:${pct}%"></i></div><p>Ch. ${opts.progress} · ${pct}%</p>` : ""}`;
   el.addEventListener("click", () => openDetail(m));
   return el;
 }
 
-async function loadFeed(reset) {
-  if (feedState.loading || (!reset && !feedState.hasNext)) return;
-  feedState.loading = true;
-  const feed = $("#feed");
-  if (reset) {
-    feedState.page = 0; feedState.hasNext = true; feedState.items = [];
-    feed.innerHTML = `<div class="loading"><div class="spinner"></div>Memuat manhwa…</div>`;
-  }
-  try {
-    const pg = await fetchPage({ page: feedState.page + 1, perPage: 8, sort: feedState.sort });
-    feedState.page = pg.pageInfo.currentPage;
-    feedState.hasNext = pg.pageInfo.hasNextPage;
-    if (reset) feed.innerHTML = "";
-    pg.media.forEach((m) => { feedState.items.push(m); feed.appendChild(feedCard(m)); });
-    if (!pg.media.length && reset) feed.innerHTML = `<div class="empty"><span class="big">🌵</span>Kosong. Coba urutan lain.</div>`;
-  } catch (err) {
-    if (reset) feed.innerHTML = `<div class="errbox">⚠️ ${esc(err.message)}<br><button onclick="loadFeed(true)">Coba Lagi</button></div>`;
-  } finally {
-    feedState.loading = false;
-  }
+/* ================== BERANDA ================== */
+let heroTimer = null, heroIdx = 0;
+function buildHero(items) {
+  const hero = $("#hero");
+  const list = items.filter((m) => m.bannerImage || m.coverImage).slice(0, 5);
+  if (!list.length) { hero.style.display = "none"; return; }
+  hero.innerHTML = `<div class="track">${list.map((m) => `
+    <div class="hslide" data-id="${m.id}">
+      <img src="${esc(m.bannerImage || m.coverImage.extraLarge)}" alt="">
+      <div class="sh"></div>
+      <div class="cap">
+        <div class="kick"><svg class="ic sm" style="stroke:var(--gold)"><use href="#i-flame"/></svg> Sorotan Trending</div>
+        <h3>${esc(title(m))}</h3>
+        <div class="mm"><i>★ ${score(m)}</i><i>${m.chapters ? m.chapters + " chapter" : "Chapter ?"}</i><i>${esc(statusId(m.status))}</i>${(m.genres || []).slice(0, 2).map((g) => `<i>${esc(genreId(g))}</i>`).join("")}</div>
+      </div>
+    </div>`).join("")}</div>
+    <div class="dots">${list.map((_, i) => `<b data-i="${i}" class="${i === 0 ? "on" : ""}"></b>`).join("")}</div>`;
+  const track = hero.querySelector(".track");
+  const go = (i) => {
+    heroIdx = (i + list.length) % list.length;
+    track.style.transform = `translateX(-${heroIdx * 100}%)`;
+    $$(".dots b", hero).forEach((d, j) => d.classList.toggle("on", j === heroIdx));
+  };
+  $$(".dots b", hero).forEach((d) => d.addEventListener("click", (e) => { e.stopPropagation(); go(Number(d.dataset.i)); restartHero(); }));
+  $$(".hslide", hero).forEach((s, i) => s.addEventListener("click", () => openDetail(list[i])));
+  const restartHero = () => { clearInterval(heroTimer); heroTimer = setInterval(() => go(heroIdx + 1), 5200); };
+  restartHero();
 }
-
-$("#feed").addEventListener("scroll", (e) => {
-  const el = e.target;
-  if (el.scrollTop + el.clientHeight > el.scrollHeight - el.clientHeight * 1.6) loadFeed(false);
-});
-
-$("#sortchips").addEventListener("click", (e) => {
-  const btn = e.target.closest(".chip");
-  if (!btn) return;
-  document.querySelectorAll("#sortchips .chip").forEach((c) => c.classList.toggle("on", c === btn));
-  feedState.sort = btn.dataset.sort;
-  $("#feed").scrollTop = 0;
-  loadFeed(true);
-});
-
-function refreshSaveButtons() {
-  document.querySelectorAll(".savebtn").forEach((b) => {
-    const on = inLib(Number(b.dataset.id));
-    b.classList.toggle("saved", on);
-    b.textContent = on ? "✓ Di Library" : "+ Library";
+function buildGenreChips(container, onPick) {
+  const c = $(container);
+  c.innerHTML = "";
+  GENRES.forEach(([en, id]) => {
+    const b = document.createElement("button");
+    b.className = "chip"; b.dataset.genre = en;
+    b.innerHTML = `<svg class="ic"><use href="#i-leaf"/></svg>${id}`;
+    b.addEventListener("click", () => onPick(en, b));
+    c.appendChild(b);
+  });
+}
+async function loadHome() {
+  buildGenreChips("#genre-chips", (en) => { gotoExplore({ genre: en }); });
+  try {
+    const d = await gql(`query {
+      trending: Page(page: 1, perPage: 12) { media(type: MANGA, countryOfOrigin: "KR", sort: TRENDING_DESC, isAdult: false) { ...F } }
+      top: Page(page: 1, perPage: 12) { media(type: MANGA, countryOfOrigin: "KR", sort: SCORE_DESC, isAdult: false) { ...F } }
+      fresh: Page(page: 1, perPage: 12) { media(type: MANGA, countryOfOrigin: "KR", sort: UPDATED_AT_DESC, isAdult: false) { ...F } }
+    } ${FRAG}`, {});
+    buildHero(d.trending.media);
+    const fill = (sel, items) => { const r = $(sel); r.innerHTML = ""; items.forEach((m) => r.appendChild(miniCard(m))); };
+    fill("#row-trending", d.trending.media);
+    fill("#row-top", d.top.media);
+    fill("#row-fresh", d.fresh.media);
+  } catch (err) {
+    $("#hero").innerHTML = `<div class="errbox">Yah, gagal memuat. ${esc(err.message)}<br><button onclick="loadHome()">Coba Lagi</button></div>`;
+    ["#row-trending", "#row-top", "#row-fresh"].forEach((s) => { $(s).innerHTML = ""; });
+  }
+  renderLanjut();
+}
+function renderLanjut() {
+  const items = Object.values(library).filter((i) => i.status === "Baca" && i.progress > 0)
+    .sort((a, b) => b.progress - a.progress).slice(0, 10);
+  const wrap = $("#lanjut-wrap");
+  if (!items.length) { wrap.style.display = "none"; return; }
+  wrap.style.display = "block";
+  const c = $("#lanjut"); c.innerHTML = "";
+  items.forEach((it) => {
+    const fake = { id: it.id, title: { english: it.title }, coverImage: { extraLarge: it.cover }, chapters: it.chapters, status: "RELEASING", genres: [], externalLinks: [], siteUrl: it.siteUrl, description: "" };
+    c.appendChild(miniCard(fake, { progress: it.progress }));
   });
 }
 
-/* ---------- GRID / SEARCH ---------- */
-let gridLoaded = false;
-async function loadGrid(search) {
-  const grid = $("#grid"), st = $("#gridstate");
-  grid.innerHTML = "";
-  st.innerHTML = `<div class="loading"><div class="spinner"></div>Memuat…</div>`;
-  try {
-    const pg = await fetchPage({ page: 1, perPage: 30, sort: search ? "SEARCH_MATCH" : "POPULARITY_DESC", search: search || null });
-    st.innerHTML = "";
-    if (!pg.media.length) { st.innerHTML = `<div class="empty"><span class="big">🔍</span>Nggak ketemu. Coba kata kunci lain.</div>`; return; }
-    pg.media.forEach((m) => {
-      const el = document.createElement("div");
-      el.className = "gcard";
-      el.innerHTML = `
-        <div class="cov"><img src="${esc(m.coverImage.extraLarge)}" alt="" loading="lazy">
-        <span class="sc">★ ${m.averageScore ? (m.averageScore / 10).toFixed(1) : "-"}</span></div>
-        <h3>${esc(title(m))}</h3>
-        <p>${m.chapters ? m.chapters + " ch" : "? ch"} · ${esc(statusId(m.status))}</p>`;
-      el.addEventListener("click", () => openDetail(m));
-      grid.appendChild(el);
-    });
-  } catch (err) {
-    st.innerHTML = `<div class="errbox">⚠️ ${esc(err.message)}</div>`;
+/* ================== JELAJAH ================== */
+let ex = { page: 0, hasNext: true, loading: false, sort: "TRENDING_DESC", search: "", genre: "", status: "" };
+async function loadExplore(reset) {
+  if (ex.loading || (!reset && !ex.hasNext)) return;
+  ex.loading = true;
+  const grid = $("#grid"), st = $("#gridstate"), sent = $("#sentinel");
+  if (reset) {
+    ex.page = 0; ex.hasNext = true; grid.innerHTML = "";
+    st.innerHTML = `<div class="loading"><div class="spinner"></div>Memuat manhwa…</div>`;
   }
+  sent.textContent = ex.hasNext ? "Memuat lagi…" : "";
+  try {
+    const pg = await fetchPage({ page: ex.page + 1, perPage: 24, sort: ex.sort, search: ex.search, genre: ex.genre || null, status: ex.status || null });
+    ex.page = pg.pageInfo.currentPage; ex.hasNext = pg.pageInfo.hasNextPage;
+    st.innerHTML = "";
+    if (!pg.media.length && reset) st.innerHTML = `<div class="empty"><div class="eic"><svg class="ic"><use href="#i-search"/></svg></div>Nggak ketemu. Coba kata kunci atau filter lain ya.</div>`;
+    pg.media.forEach((m) => grid.appendChild(miniCard(m)));
+    sent.textContent = ex.hasNext ? "Gulir ke bawah buat muat lagi…" : "— Sudah sampai ujung —";
+  } catch (err) {
+    if (reset) st.innerHTML = `<div class="errbox">${esc(err.message)}<br><button onclick="loadExplore(true)">Coba Lagi</button></div>`;
+    sent.textContent = "";
+  } finally { ex.loading = false; }
 }
-function doSearch() { loadGrid($("#q").value.trim()); }
+new IntersectionObserver((es) => { if (es[0].isIntersecting && $("#view-explore").classList.contains("active")) loadExplore(false); }, { rootMargin: "500px" })
+  .observe($("#sentinel"));
+function syncGenreChips() {
+  $$("#genre-chips-2 .chip").forEach((c) => c.classList.toggle("on", c.dataset.genre === ex.genre));
+}
+function gotoExplore(patch) {
+  if (patch.genre != null) { ex.genre = ex.genre === patch.genre ? "" : patch.genre; }
+  if (patch.sort) { ex.sort = patch.sort; $("#f-sort").value = patch.sort; }
+  switchView("view-explore");
+  syncGenreChips();
+  loadExplore(true);
+}
+buildGenreChips("#genre-chips-2", (en) => { ex.genre = ex.genre === en ? "" : en; syncGenreChips(); loadExplore(true); });
+function doSearch() { ex.search = $("#q").value.trim(); ex.sort = ex.search ? "SEARCH_MATCH" : $("#f-sort").value; loadExplore(true); }
 $("#qbtn").addEventListener("click", doSearch);
 $("#q").addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
+$("#f-sort").addEventListener("change", (e) => { ex.sort = e.target.value; loadExplore(true); });
+$("#f-status").addEventListener("change", (e) => { ex.status = e.target.value; loadExplore(true); });
 
-/* ---------- LIBRARY VIEW ---------- */
+/* ================== TOP 10 ================== */
+let topLoaded = false;
+async function loadTop() {
+  const c = $("#top10");
+  try {
+    const pg = await fetchPage({ page: 1, perPage: 10, sort: "POPULARITY_DESC" });
+    c.innerHTML = "";
+    pg.media.forEach((m, i) => {
+      const row = document.createElement("div");
+      row.className = "trow";
+      row.innerHTML = `
+        <div class="no">${i + 1}</div>
+        <img src="${esc(m.coverImage.extraLarge)}" alt="" loading="lazy">
+        <div class="mid"><h4>${esc(title(m))}</h4>
+        <p><svg class="ic"><use href="#i-star"/></svg>${score(m)} · ${m.chapters ? m.chapters + " chapter" : "? chapter"} · ${esc(statusId(m.status))}</p></div>
+        <svg class="ic chev"><use href="#i-chev"/></svg>`;
+      row.addEventListener("click", () => openDetail(m));
+      c.appendChild(row);
+    });
+    topLoaded = true;
+  } catch (err) {
+    c.innerHTML = `<div class="errbox">${esc(err.message)}<br><button onclick="loadTop()">Coba Lagi</button></div>`;
+  }
+}
+
+/* ================== PUSTAKA VIEW ================== */
+let libTab = "Semua";
 function renderLib() {
-  const wrap = $("#lib");
   const items = Object.values(library);
-  if (!items.length) {
-    wrap.innerHTML = `<div class="empty"><span class="big">📚</span>Library masih kosong.<br>Jelajahi feed, terus tap <b>+ Library</b> di judul yg kamu suka.</div>`;
+  $("#st-total").textContent = items.length;
+  $("#st-ch").textContent = items.reduce((a, i) => a + (i.progress || 0), 0);
+  $("#st-done").textContent = items.filter((i) => i.status === "Tamat").length;
+  const wrap = $("#lib");
+  const shown = items.filter((i) => libTab === "Semua" || i.status === libTab);
+  if (!shown.length) {
+    wrap.innerHTML = `<div class="empty"><div class="eic"><svg class="ic"><use href="#i-shelf"/></svg></div>${items.length ? "Belum ada judul di tab ini." : "Pustakamu masih kosong.<br>Jelajahi manhwa, terus tap tombol simpan di judul yg kamu suka."}</div>`;
     return;
   }
   wrap.innerHTML = "";
-  items.forEach((it) => {
+  shown.forEach((it) => {
+    const pct = it.chapters ? Math.min(100, Math.round(it.progress / it.chapters * 100)) : 0;
     const row = document.createElement("div");
     row.className = "lrow";
     row.innerHTML = `
       <img src="${esc(it.cover)}" alt="">
       <div class="mid">
         <h3>${esc(it.title)}</h3>
-        <div class="sub">${it.chapters ? "Total " + it.chapters + " chapter" : "Chapter belum diketahui"}</div>
+        <div class="sub">${it.chapters ? "Total " + it.chapters + " chapter · " + pct + "% dibaca" : "Jumlah chapter belum diketahui"}</div>
+        ${it.chapters ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ""}
         <div class="stepper">
-          <button class="minus">−</button>
-          <b>Ch. ${it.progress}${it.chapters ? " / " + it.chapters : ""}</b>
-          <button class="plus">+</button>
+          <button class="minus">−</button><b>Ch. ${it.progress}</b><button class="plus">+</button>
+          <select>
+            <option ${it.status === "Baca" ? "selected" : ""}>Baca</option>
+            <option ${it.status === "Nanti" ? "selected" : ""}>Nanti</option>
+            <option ${it.status === "Tamat" ? "selected" : ""}>Tamat</option>
+          </select>
         </div>
       </div>
-      <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end">
-        <select>
-          <option ${it.status === "Baca" ? "selected" : ""}>Baca</option>
-          <option ${it.status === "Nanti" ? "selected" : ""}>Nanti</option>
-          <option ${it.status === "Tamat" ? "selected" : ""}>Tamat</option>
-        </select>
-        <button class="del" title="Hapus">🗑</button>
-      </div>`;
-    row.querySelector(".minus").addEventListener("click", () => { it.progress = Math.max(0, it.progress - 1); saveLib(); renderLib(); });
-    row.querySelector(".plus").addEventListener("click", () => { it.progress = it.chapters ? Math.min(it.chapters, it.progress + 1) : it.progress + 1; saveLib(); renderLib(); });
-    row.querySelector("select").addEventListener("change", (e) => { it.status = e.target.value; saveLib(); });
-    row.querySelector(".del").addEventListener("click", () => { delete library[it.id]; saveLib(); renderLib(); refreshSaveButtons(); });
+      <button class="del" title="Hapus"><svg class="ic"><use href="#i-trash"/></svg></button>`;
+    row.querySelector(".minus").addEventListener("click", () => { it.progress = Math.max(0, it.progress - 1); saveLib(); renderLib(); renderLanjut(); });
+    row.querySelector(".plus").addEventListener("click", () => { it.progress = it.chapters ? Math.min(it.chapters, it.progress + 1) : it.progress + 1; saveLib(); renderLib(); renderLanjut(); });
+    row.querySelector("select").addEventListener("change", (e) => { it.status = e.target.value; saveLib(); renderLib(); renderLanjut(); });
+    row.querySelector(".del").addEventListener("click", () => { delete library[it.id]; saveLib(); renderLib(); renderLanjut(); refreshSaveButtons(); toast("Dihapus dari pustaka", "i-trash"); });
+    const open = () => openDetail({ id: it.id, title: { english: it.title }, coverImage: { extraLarge: it.cover }, bannerImage: null, description: "", averageScore: null, chapters: it.chapters, status: "", genres: [], startDate: {}, externalLinks: [], siteUrl: it.siteUrl });
+    row.querySelector("img").addEventListener("click", open);
+    row.querySelector("h3").addEventListener("click", open);
     wrap.appendChild(row);
   });
 }
+$("#libtabs").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  libTab = b.dataset.tab;
+  $$("#libtabs button").forEach((x) => x.classList.toggle("on", x === b));
+  renderLib();
+});
 
-/* ---------- DETAIL MODAL ---------- */
-function openDetail(m) {
+/* ================== DETAIL ================== */
+function refreshSaveButtons() {
+  $$(".savebtn").forEach((b) => {
+    const on = inLib(Number(b.dataset.id));
+    b.className = "btn savebtn" + (on ? " saved" : " primary");
+    b.innerHTML = `<svg class="ic"><use href="#${on ? "i-check" : "i-plus"}"/></svg> ${on ? "Di Pustaka" : "Simpan ke Pustaka"}`;
+  });
+}
+async function openDetail(m) {
   const sheet = $("#sheet");
   const links = m.externalLinks || [];
   const saved = inLib(m.id);
   const prog = saved ? library[m.id].progress : 0;
   sheet.innerHTML = `
     <div class="banner" style="background-image:url('${esc(m.bannerImage || m.coverImage.extraLarge)}')">
-      <button class="x" id="mx">✕</button>
+      <button class="x" id="mx"><svg class="ic"><use href="#i-x"/></svg></button>
     </div>
     <div class="body">
       <h2>${esc(title(m))}</h2>
-      <div class="alt">${esc(m.title.romaji || "")}${m.startDate && m.startDate.year ? " · " + m.startDate.year : ""}</div>
+      <div class="alt">${esc(m.title.romaji || "")}${m.startDate && m.startDate.year ? " · " + m.startDate.year : ""} · Manhwa</div>
       <div class="stats">
-        <i>★ ${m.averageScore ? (m.averageScore / 10).toFixed(1) + " / 10" : "-"}</i>
+        <i><svg class="ic"><use href="#i-star"/></svg>${score(m)} / 10</i>
         <i>${m.chapters ? m.chapters + " chapter" : "Chapter ?"}</i>
         <i>${esc(statusId(m.status))}</i>
-        ${(m.genres || []).map((g) => `<i>${esc(g)}</i>`).join("")}
+        ${(m.genres || []).map((g) => `<i>${esc(genreId(g))}</i>`).join("")}
       </div>
-      <p class="desc">${esc(stripHtml(m.description) || "Belum ada sinopsis.")}</p>
+      <p class="desc">${esc(stripHtml(m.description) || "Belum ada sinopsis untuk judul ini.")}</p>
       ${saved ? `<div class="prog"><span>Progress bacaanmu</span>
-        <div class="stepper">
-          <button id="pminus">−</button><b>Ch. ${prog}</b><button id="pplus">+</button>
-        </div></div>` : ""}
+        <div class="stepper"><button id="pminus">−</button><b>Ch. ${prog}</b><button id="pplus">+</button></div></div>` : ""}
       <div class="rowbtns">
-        <button class="btn ${saved ? "saved" : "primary"}" id="msave">${saved ? "✓ Di Library" : "+ Simpan ke Library"}</button>
-        <button class="btn" id="manilist">AniList ↗</button>
+        <button class="btn savebtn ${saved ? "saved" : "primary"}" data-id="${m.id}"><svg class="ic"><use href="#${saved ? "i-check" : "i-plus"}"/></svg> ${saved ? "Di Pustaka" : "Simpan ke Pustaka"}</button>
+        <button class="btn" id="mshare"><svg class="ic"><use href="#i-share"/></svg> Bagikan</button>
       </div>
-      <h4>Baca di sumber resmi</h4>
+      <div id="chars-wrap"></div>
+      <h4>Baca di Sumber Resmi</h4>
       <div class="links">
-        ${links.length ? links.map((l) => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.site)} <small>buka ↗</small></a>`).join("") : `<a href="${esc(m.siteUrl)}" target="_blank" rel="noopener">Cek di AniList <small>buka ↗</small></a>`}
+        ${links.length ? links.map((l) => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.site)} <small>Buka <svg class="ic"><use href="#i-ext"/></svg></small></a>`).join("") : `<a href="${esc(m.siteUrl)}" target="_blank" rel="noopener">Cek di AniList <small>Buka <svg class="ic"><use href="#i-ext"/></svg></small></a>`}
       </div>
+      <div id="recs-wrap"></div>
     </div>`;
   $("#modal").classList.add("open");
   $("#mx").addEventListener("click", closeDetail);
-  $("#manilist").addEventListener("click", () => window.open(m.siteUrl, "_blank", "noopener"));
-  $("#msave").addEventListener("click", () => { toggleLib(m); openDetail(m); });
+  sheet.querySelector(".savebtn").addEventListener("click", () => { toggleLib(m); openDetail(m); });
+  $("#mshare").addEventListener("click", async () => {
+    const data = { title: title(m), text: "Lagi baca " + title(m) + " — cek di ManhwaHub", url: m.siteUrl };
+    if (navigator.share) { try { await navigator.share(data); } catch (e) {} }
+    else if (navigator.clipboard) { await navigator.clipboard.writeText(m.siteUrl); toast("Tautan AniList disalin", "i-share"); }
+  });
   if (saved) {
-    $("#pminus").addEventListener("click", () => { library[m.id].progress = Math.max(0, library[m.id].progress - 1); saveLib(); renderLib(); openDetail(m); });
-    $("#pplus").addEventListener("click", () => { const it = library[m.id]; it.progress = it.chapters ? Math.min(it.chapters, it.progress + 1) : it.progress + 1; saveLib(); renderLib(); openDetail(m); });
+    $("#pminus").addEventListener("click", () => { library[m.id].progress = Math.max(0, library[m.id].progress - 1); saveLib(); renderLib(); renderLanjut(); openDetail(m); });
+    $("#pplus").addEventListener("click", () => { const it = library[m.id]; it.progress = it.chapters ? Math.min(it.chapters, it.progress + 1) : it.progress + 1; saveLib(); renderLib(); renderLanjut(); openDetail(m); });
   }
+  // muat karakter + rekomendasi (diam-diam, kalau gagal ya sudah)
+  try {
+    const d = await gql(`query ($id: Int) {
+      Media(id: $id) {
+        characters(sort: ROLE, perPage: 10) { edges { node { name { full } image { medium } } } }
+        recommendations(perPage: 6) { nodes { mediaRecommendation { id title { english romaji native } coverImage { extraLarge } bannerImage description averageScore chapters status genres startDate { year } externalLinks { site url type } siteUrl } } }
+      }
+    }`, { id: m.id });
+    const chars = (d.Media.characters.edges || []).map((e) => e.node).filter((n) => n.image && n.image.medium);
+    if (chars.length) {
+      $("#chars-wrap").innerHTML = `<h4>Karakter</h4><div class="chars">${chars.map((n) => `
+        <div class="char"><img src="${esc(n.image.medium)}" alt="" loading="lazy"><p>${esc(n.name.full)}</p></div>`).join("")}</div>`;
+    }
+    const recs = (d.Media.recommendations.nodes || []).map((n) => n.mediaRecommendation).filter(Boolean);
+    if (recs.length) {
+      const wrap = $("#recs-wrap");
+      wrap.innerHTML = `<h4>Mungkin Kamu Suka</h4><div class="recs"></div>`;
+      recs.forEach((r) => wrap.querySelector(".recs").appendChild(miniCard(r)));
+    }
+  } catch (e) { /* abaikan */ }
 }
 function closeDetail() { $("#modal").classList.remove("open"); }
 $("#modal").addEventListener("click", (e) => { if (e.target.id === "modal") closeDetail(); });
 
-/* ---------- NAV ---------- */
-document.querySelectorAll("nav button").forEach((b) => {
-  b.addEventListener("click", () => {
-    document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("on", x === b));
-    document.querySelectorAll("section.view").forEach((v) => v.classList.toggle("active", v.id === b.dataset.view));
-    if (b.dataset.view === "view-grid" && !gridLoaded) { gridLoaded = true; loadGrid(""); }
-    if (b.dataset.view === "view-lib") renderLib();
-    window.scrollTo(0, 0);
-  });
+/* ================== ACAK ================== */
+$("#btn-acak").addEventListener("click", async () => {
+  toast("Mencari manhwa acak buat kamu…", "i-shuffle");
+  try {
+    const page = 1 + Math.floor(Math.random() * 400);
+    const pg = await fetchPage({ page, perPage: 1, sort: "POPULARITY_DESC" });
+    if (pg.media.length) openDetail(pg.media[0]);
+    else toast("Yah, lagi kosong. Coba lagi ya.", "i-x");
+  } catch (err) { toast(err.message, "i-x"); }
+});
+$("#btn-cari").addEventListener("click", () => { switchView("view-explore"); setTimeout(() => $("#q").focus(), 80); });
+
+/* ================== NAVIGASI ================== */
+function switchView(id) {
+  $$("nav button").forEach((x) => x.classList.toggle("on", x.dataset.view === id));
+  $$("section.view").forEach((v) => v.classList.toggle("active", v.id === id));
+  if (id === "view-top" && !topLoaded) loadTop();
+  if (id === "view-lib") renderLib();
+  if (id === "view-explore" && !$("#grid").children.length && !ex.loading) loadExplore(true);
+  window.scrollTo(0, 0);
+}
+$$("nav button").forEach((b) => b.addEventListener("click", () => switchView(b.dataset.view)));
+document.addEventListener("click", (e) => {
+  const g = e.target.closest("[data-goto]");
+  if (!g) return;
+  if (g.dataset.sortlink) { gotoExplore({ sort: g.dataset.sortlink }); return; }
+  switchView(g.dataset.goto);
 });
 
-/* ---------- INIT ---------- */
+/* ================== MULAI ================== */
 renderLib();
-loadFeed(true);
+loadHome();
 </script>
 </body>
 </html>
