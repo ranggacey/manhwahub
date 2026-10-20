@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ManhwaHub — Jelajahi Manhwa</title>
+<meta name="description" content="Jelajahi manhwa populer, simpan ke library, dan tandai progress bacaanmu. Data dari AniList.">
+<style>
+  :root{
+    --bg:#0c0c10; --bg2:#141419; --card:#17171f; --line:#26262f;
+    --txt:#f4f2f7; --mut:#9b97a8; --acc:#ff5e7a; --acc2:#8e6fa8;
+    --gold:#e9d6b2; --radius:18px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:#060608; color:var(--txt);
+    font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    display:flex; justify-content:center;
+  }
+  #app{width:100%; max-width:480px; min-height:100dvh; background:var(--bg); position:relative; display:flex; flex-direction:column; box-shadow:0 0 60px rgba(0,0,0,.6)}
+  header{
+    position:sticky; top:0; z-index:40; padding:14px 18px 10px;
+    background:linear-gradient(180deg, rgba(12,12,16,.97), rgba(12,12,16,.88) 70%, transparent);
+    backdrop-filter:blur(8px);
+  }
+  .brand{display:flex; align-items:baseline; gap:8px}
+  .brand h1{font-size:22px; font-weight:800; letter-spacing:.2px}
+  .brand h1 span{color:var(--acc)}
+  .brand small{color:var(--mut); font-size:11px}
+  main{flex:1; position:relative}
+  section.view{display:none; animation:fade .25s ease}
+  section.view.active{display:block}
+  @keyframes fade{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+
+  /* ---------- FEED ---------- */
+  .sortchips{display:flex; gap:8px; padding:4px 18px 12px; overflow-x:auto; scrollbar-width:none}
+  .sortchips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto; padding:7px 14px; border-radius:999px; border:1px solid var(--line); background:var(--bg2); color:var(--mut); font-size:12.5px; font-weight:600; cursor:pointer}
+  .chip.on{background:var(--acc); border-color:var(--acc); color:#fff}
+  #feed{height:calc(100dvh - 210px); overflow-y:auto; scroll-snap-type:y mandatory; scrollbar-width:none; border-radius:0}
+  #feed::-webkit-scrollbar{display:none}
+  .fcard{
+    position:relative; height:100%; scroll-snap-align:start; overflow:hidden;
+    background:#000; cursor:pointer;
+  }
+  .fcard img.bg{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 22%}
+  .fcard .shade{position:absolute; inset:0; background:linear-gradient(180deg, rgba(6,6,10,.28) 0%, rgba(6,6,10,0) 34%, rgba(6,6,10,.55) 62%, rgba(6,6,10,.96) 88%)}
+  .fcard .top{position:absolute; top:14px; left:16px; right:16px; display:flex; justify-content:space-between; align-items:center}
+  .badge{font-size:11px; font-weight:700; padding:5px 10px; border-radius:999px; background:rgba(10,10,14,.55); border:1px solid rgba(255,255,255,.18); backdrop-filter:blur(6px)}
+  .badge.score{color:#ffd166}
+  .fcard .info{position:absolute; left:0; right:0; bottom:0; padding:18px 18px 20px}
+  .fcard h2{font-size:25px; line-height:1.15; font-weight:800; text-shadow:0 2px 14px rgba(0,0,0,.5)}
+  .meta{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0}
+  .meta i{font-style:normal; font-size:11.5px; color:#e8e4f0; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.14); padding:4px 9px; border-radius:999px; backdrop-filter:blur(4px)}
+  .meta i.hot{color:#ffb3c0; border-color:rgba(255,94,122,.4)}
+  .syn{color:#d9d5e2; font-size:13.5px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden}
+  .actions{display:flex; gap:9px; margin-top:14px}
+  .btn{flex:1; border:none; cursor:pointer; font-weight:700; font-size:13.5px; padding:12px 10px; border-radius:12px; background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.16); backdrop-filter:blur(6px)}
+  .btn.primary{background:var(--acc); border-color:var(--acc)}
+  .btn.saved{background:#2e7d4f; border-color:#2e7d4f}
+  .btn:active{transform:scale(.97)}
+  .hint-swipe{text-align:center; color:var(--mut); font-size:11px; padding:8px 0 2px; animation:bob 1.8s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+
+  /* ---------- GRID ---------- */
+  .searchbar{padding:2px 18px 12px; display:flex; gap:8px}
+  .searchbar input{
+    flex:1; background:var(--bg2); border:1px solid var(--line); color:var(--txt);
+    border-radius:12px; padding:11px 14px; font-size:14px; outline:none; font-family:inherit;
+  }
+  .searchbar input:focus{border-color:var(--acc2)}
+  .searchbar button{background:var(--acc); color:#fff; border:none; border-radius:12px; padding:0 16px; font-weight:700; cursor:pointer}
+  .grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; padding:2px 14px 24px}
+  .gcard{cursor:pointer}
+  .gcard .cov{position:relative; border-radius:14px; overflow:hidden; aspect-ratio:3/4.2; background:var(--card)}
+  .gcard img{width:100%; height:100%; object-fit:cover; display:block}
+  .gcard .sc{position:absolute; top:6px; left:6px; font-size:10.5px; font-weight:800; color:#ffd166; background:rgba(8,8,12,.65); padding:3px 7px; border-radius:8px}
+  .gcard h3{font-size:12.5px; font-weight:700; line-height:1.3; margin-top:7px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+  .gcard p{font-size:11px; color:var(--mut); margin-top:2px}
+
+  /* ---------- LIBRARY ---------- */
+  .libwrap{padding:4px 16px 26px; display:flex; flex-direction:column; gap:12px}
+  .lrow{display:flex; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:10px; align-items:center}
+  .lrow img{width:52px; height:74px; object-fit:cover; border-radius:10px; flex:0 0 auto}
+  .lrow .mid{flex:1; min-width:0}
+  .lrow h3{font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .lrow .sub{font-size:11.5px; color:var(--mut); margin:3px 0 8px}
+  .lrow select{background:var(--bg2); color:var(--txt); border:1px solid var(--line); border-radius:8px; font-size:12px; padding:5px 7px; font-family:inherit}
+  .stepper{display:flex; align-items:center; gap:8px}
+  .stepper button{width:27px; height:27px; border-radius:9px; border:1px solid var(--line); background:var(--bg2); color:#fff; font-size:16px; cursor:pointer; line-height:1}
+  .stepper b{font-size:13px; min-width:58px; text-align:center}
+  .del{background:none; border:none; color:#ff7d92; font-size:18px; cursor:pointer; padding:6px}
+  .empty{padding:56px 30px; text-align:center; color:var(--mut); font-size:14px; line-height:1.7}
+  .empty .big{font-size:38px; display:block; margin-bottom:10px}
+
+  /* ---------- STATES ---------- */
+  .loading{padding:60px 20px; text-align:center; color:var(--mut); font-size:14px}
+  .spinner{width:34px; height:34px; border-radius:50%; border:3px solid var(--line); border-top-color:var(--acc); margin:0 auto 14px; animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .errbox{margin:20px 16px; background:#2a1420; border:1px solid #57283c; color:#ffb3c0; border-radius:14px; padding:16px; font-size:13.5px; line-height:1.6}
+  .errbox button{margin-top:10px; background:var(--acc); border:none; color:#fff; font-weight:700; padding:9px 16px; border-radius:10px; cursor:pointer}
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:sticky; bottom:0; z-index:40; display:flex; background:rgba(16,16,22,.96);
+    border-top:1px solid var(--line); backdrop-filter:blur(10px); padding-bottom:env(safe-area-inset-bottom);
+  }
+  nav button{flex:1; background:none; border:none; color:var(--mut); padding:11px 0 9px; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit}
+  nav button .ic{display:block; font-size:20px; margin-bottom:2px}
+  nav button.on{color:var(--acc)}
+
+  /* ---------- MODAL ---------- */
+  #modal{position:fixed; inset:0; z-index:80; display:none; align-items:flex-end; justify-content:center; background:rgba(4,4,8,.66)}
+  #modal.open{display:flex}
+  .sheet{
+    width:100%; max-width:480px; max-height:88dvh; overflow-y:auto; background:var(--bg2);
+    border-radius:22px 22px 0 0; border:1px solid var(--line); animation:up .28s ease;
+  }
+  @keyframes up{from{transform:translateY(36px); opacity:.4} to{transform:none; opacity:1}}
+  .sheet .banner{height:150px; background-size:cover; background-position:center 30%; position:relative}
+  .sheet .banner::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg, transparent, var(--bg2))}
+  .sheet .x{position:absolute; top:12px; right:12px; z-index:2; width:34px; height:34px; border-radius:50%; border:none; background:rgba(8,8,12,.6); color:#fff; font-size:17px; cursor:pointer}
+  .sheet .body{padding:4px 20px 26px; margin-top:-34px; position:relative}
+  .sheet .body h2{font-size:21px; line-height:1.25; padding-right:8px}
+  .sheet .alt{color:var(--mut); font-size:12px; margin-top:3px}
+  .sheet .stats{display:flex; gap:8px; flex-wrap:wrap; margin:13px 0}
+  .sheet .stats i{font-style:normal; font-size:12px; background:var(--card); border:1px solid var(--line); padding:6px 10px; border-radius:10px}
+  .sheet .desc{font-size:13.5px; line-height:1.65; color:#ddd9e6}
+  .sheet h4{font-size:13px; letter-spacing:.6px; text-transform:uppercase; color:var(--mut); margin:18px 0 9px}
+  .links{display:flex; flex-direction:column; gap:8px}
+  .links a{display:flex; justify-content:space-between; align-items:center; background:var(--card); border:1px solid var(--line); color:var(--txt); text-decoration:none; padding:12px 14px; border-radius:12px; font-size:14px; font-weight:600}
+  .links a small{color:var(--acc); font-weight:700}
+  .sheet .rowbtns{display:flex; gap:9px; margin-top:18px}
+  .sheet .rowbtns .btn{backdrop-filter:none}
+  .prog{display:flex; align-items:center; gap:10px; margin-top:14px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 12px}
+  .prog span{font-size:12.5px; color:var(--mut); flex:1}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>Manhwa<span>Hub</span></h1>
+      <small>manhwa pilihan · data AniList</small>
+    </div>
+  </header>
+
+  <main>
+    <!-- JELAJAH / FEED -->
+    <section id="view-feed" class="view active">
+      <div class="sortchips" id="sortchips">
+        <button class="chip on" data-sort="TRENDING_DESC">🔥 Trending</button>
+        <button class="chip" data-sort="POPULARITY_DESC">👥 Populer</button>
+        <button class="chip" data-sort="SCORE_DESC">⭐ Skor Tertinggi</button>
+        <button class="chip" data-sort="UPDATED_AT_DESC">🆕 Baru Update</button>
+      </div>
+      <div id="feed"><div class="loading"><div class="spinner"></div>Memuat manhwa…</div></div>
+      <div class="hint-swipe">geser ke atas buat lanjut ↓</div>
+    </section>
+
+    <!-- POPULER / GRID + SEARCH -->
+    <section id="view-grid" class="view">
+      <div class="searchbar">
+        <input id="q" type="search" placeholder="Cari judul manhwa…" autocomplete="off">
+        <button id="qbtn">Cari</button>
+      </div>
+      <div id="grid" class="grid"></div>
+      <div id="gridstate"></div>
+    </section>
+
+    <!-- LIBRARY -->
+    <section id="view-lib" class="view">
+      <div id="lib" class="libwrap"></div>
+    </section>
+  </main>
+
+  <nav>
+    <button data-view="view-feed" class="on"><span class="ic">🏠</span>Jelajah</button>
+    <button data-view="view-grid"><span class="ic">🔎</span>Populer</button>
+    <button data-view="view-lib"><span class="ic">📚</span>Library</button>
+  </nav>
+</div>
+
+<!-- DETAIL MODAL -->
+<div id="modal">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script>
+"use strict";
+const API = "https://graphql.anilist.co";
+const READ_SITES = ["WEBTOON","Tapas","Lezhin","Lezhin Comics","Manta","Tappytoon","Pocket Comics","INKR Comics","Web Comics","Toomics","Delitoon","Bilibili Comics"];
+
+const QUERY = `
+query ($page: Int, $perPage: Int, $sort: [MediaSort], $search: String) {
+  Page(page: $page, perPage: $perPage) {
+    pageInfo { hasNextPage currentPage }
+    media(type: MANGA, countryOfOrigin: "KR", sort: $sort, search: $search, isAdult: false) {
+      id
+      title { english romaji native }
+      coverImage { extraLarge }
+      bannerImage
+      description
+      averageScore
+      chapters
+      status
+      genres
+      startDate { year }
+      externalLinks { site url type }
+      siteUrl
+    }
+  }
+}`;
+
+const $ = (s, r) => (r || document).querySelector(s);
+const stripHtml = (h) => {
+  const d = document.createElement("div");
+  d.innerHTML = h || "";
+  return (d.textContent || "").replace(/\s+\n/g, " ").trim();
+};
+const title = (m) => (m.title.english || m.title.romaji || m.title.native || "Tanpa judul");
+const statusId = (s) => ({ RELEASING: "Ongoing", FINISHED: "Tamat", NOT_YET_RELEASED: "Belum Rilis", CANCELLED: "Batal", HIATUS: "Hiatus" }[s] || s || "-");
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+/* ---------- library (localStorage) ---------- */
+const LS_KEY = "manhwahub-library-v1";
+let library = {};
+try { library = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch (e) { library = {}; }
+function saveLib() { localStorage.setItem(LS_KEY, JSON.stringify(library)); }
+function inLib(id) { return !!library[id]; }
+function toggleLib(m) {
+  if (library[m.id]) { delete library[m.id]; }
+  else {
+    library[m.id] = {
+      id: m.id, title: title(m), cover: m.coverImage.extraLarge,
+      chapters: m.chapters || null, status: "Baca", progress: 0,
+      siteUrl: m.siteUrl,
+    };
+  }
+  saveLib(); renderLib(); refreshSaveButtons();
+}
+
+/* ---------- AniList fetch ---------- */
+async function fetchPage({ page, perPage, sort, search }) {
+  const res = await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify({ query: QUERY, variables: { page, perPage, sort: [sort], search: search || null } }),
+  });
+  if (res.status === 429) throw new Error("Kena rate limit AniList (terlalu sering). Tunggu ±1 menit lalu coba lagi ya.");
+  if (!res.ok) throw new Error("AniList lagi bermasalah (HTTP " + res.status + "). Coba lagi nanti.");
+  const json = await res.json();
+  if (json.errors) throw new Error(json.errors[0].message || "Query error");
+  return json.data.Page;
+}
+
+function readLink(m) {
+  const links = m.externalLinks || [];
+  const hit = links.find((l) => READ_SITES.some((s) => (l.site || "").toLowerCase().includes(s.toLowerCase())));
+  return hit || links[0] || null;
+}
+
+/* ---------- FEED ---------- */
+let feedState = { sort: "TRENDING_DESC", page: 0, hasNext: true, loading: false, items: [] };
+
+function feedCard(m) {
+  const el = document.createElement("article");
+  el.className = "fcard";
+  const link = readLink(m);
+  el.innerHTML = `
+    <img class="bg" src="${esc(m.coverImage.extraLarge)}" alt="" loading="lazy">
+    <div class="shade"></div>
+    <div class="top">
+      <span class="badge">${m.chapters ? m.chapters + " chapter" : "Chapter ?"}</span>
+      <span class="badge score">★ ${m.averageScore ? (m.averageScore / 10).toFixed(1) : "-"}</span>
+    </div>
+    <div class="info">
+      <h2>${esc(title(m))}</h2>
+      <div class="meta">
+        <i class="hot">${esc(statusId(m.status))}</i>
+        ${(m.genres || []).slice(0, 3).map((g) => `<i>${esc(g)}</i>`).join("")}
+        ${m.startDate && m.startDate.year ? `<i>${m.startDate.year}</i>` : ""}
+      </div>
+      <p class="syn">${esc(stripHtml(m.description) || "Belum ada sinopsis.")}</p>
+      <div class="actions">
+        <button class="btn savebtn ${inLib(m.id) ? "saved" : ""}" data-id="${m.id}">${inLib(m.id) ? "✓ Di Library" : "+ Library"}</button>
+        <button class="btn detailbtn" data-id="${m.id}">Detail</button>
+        ${link ? `<button class="btn primary readbtn" data-url="${esc(link.url)}">Baca ↗</button>` : ""}
+      </div>
+    </div>`;
+  el.querySelector(".savebtn").addEventListener("click", (e) => { e.stopPropagation(); toggleLib(m); });
+  el.querySelector(".detailbtn").addEventListener("click", (e) => { e.stopPropagation(); openDetail(m); });
+  const rb = el.querySelector(".readbtn");
+  if (rb) rb.addEventListener("click", (e) => { e.stopPropagation(); window.open(rb.dataset.url, "_blank", "noopener"); });
+  el.addEventListener("click", () => openDetail(m));
+  return el;
+}
+
+async function loadFeed(reset) {
+  if (feedState.loading || (!reset && !feedState.hasNext)) return;
+  feedState.loading = true;
+  const feed = $("#feed");
+  if (reset) {
+    feedState.page = 0; feedState.hasNext = true; feedState.items = [];
+    feed.innerHTML = `<div class="loading"><div class="spinner"></div>Memuat manhwa…</div>`;
+  }
+  try {
+    const pg = await fetchPage({ page: feedState.page + 1, perPage: 8, sort: feedState.sort });
+    feedState.page = pg.pageInfo.currentPage;
+    feedState.hasNext = pg.pageInfo.hasNextPage;
+    if (reset) feed.innerHTML = "";
+    pg.media.forEach((m) => { feedState.items.push(m); feed.appendChild(feedCard(m)); });
+    if (!pg.media.length && reset) feed.innerHTML = `<div class="empty"><span class="big">🌵</span>Kosong. Coba urutan lain.</div>`;
+  } catch (err) {
+    if (reset) feed.innerHTML = `<div class="errbox">⚠️ ${esc(err.message)}<br><button onclick="loadFeed(true)">Coba Lagi</button></div>`;
+  } finally {
+    feedState.loading = false;
+  }
+}
+
+$("#feed").addEventListener("scroll", (e) => {
+  const el = e.target;
+  if (el.scrollTop + el.clientHeight > el.scrollHeight - el.clientHeight * 1.6) loadFeed(false);
+});
+
+$("#sortchips").addEventListener("click", (e) => {
+  const btn = e.target.closest(".chip");
+  if (!btn) return;
+  document.querySelectorAll("#sortchips .chip").forEach((c) => c.classList.toggle("on", c === btn));
+  feedState.sort = btn.dataset.sort;
+  $("#feed").scrollTop = 0;
+  loadFeed(true);
+});
+
+function refreshSaveButtons() {
+  document.querySelectorAll(".savebtn").forEach((b) => {
+    const on = inLib(Number(b.dataset.id));
+    b.classList.toggle("saved", on);
+    b.textContent = on ? "✓ Di Library" : "+ Library";
+  });
+}
+
+/* ---------- GRID / SEARCH ---------- */
+let gridLoaded = false;
+async function loadGrid(search) {
+  const grid = $("#grid"), st = $("#gridstate");
+  grid.innerHTML = "";
+  st.innerHTML = `<div class="loading"><div class="spinner"></div>Memuat…</div>`;
+  try {
+    const pg = await fetchPage({ page: 1, perPage: 30, sort: search ? "SEARCH_MATCH" : "POPULARITY_DESC", search: search || null });
+    st.innerHTML = "";
+    if (!pg.media.length) { st.innerHTML = `<div class="empty"><span class="big">🔍</span>Nggak ketemu. Coba kata kunci lain.</div>`; return; }
+    pg.media.forEach((m) => {
+      const el = document.createElement("div");
+      el.className = "gcard";
+      el.innerHTML = `
+        <div class="cov"><img src="${esc(m.coverImage.extraLarge)}" alt="" loading="lazy">
+        <span class="sc">★ ${m.averageScore ? (m.averageScore / 10).toFixed(1) : "-"}</span></div>
+        <h3>${esc(title(m))}</h3>
+        <p>${m.chapters ? m.chapters + " ch" : "? ch"} · ${esc(statusId(m.status))}</p>`;
+      el.addEventListener("click", () => openDetail(m));
+      grid.appendChild(el);
+    });
+  } catch (err) {
+    st.innerHTML = `<div class="errbox">⚠️ ${esc(err.message)}</div>`;
+  }
+}
+function doSearch() { loadGrid($("#q").value.trim()); }
+$("#qbtn").addEventListener("click", doSearch);
+$("#q").addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
+
+/* ---------- LIBRARY VIEW ---------- */
+function renderLib() {
+  const wrap = $("#lib");
+  const items = Object.values(library);
+  if (!items.length) {
+    wrap.innerHTML = `<div class="empty"><span class="big">📚</span>Library masih kosong.<br>Jelajahi feed, terus tap <b>+ Library</b> di judul yg kamu suka.</div>`;
+    return;
+  }
+  wrap.innerHTML = "";
+  items.forEach((it) => {
+    const row = document.createElement("div");
+    row.className = "lrow";
+    row.innerHTML = `
+      <img src="${esc(it.cover)}" alt="">
+      <div class="mid">
+        <h3>${esc(it.title)}</h3>
+        <div class="sub">${it.chapters ? "Total " + it.chapters + " chapter" : "Chapter belum diketahui"}</div>
+        <div class="stepper">
+          <button class="minus">−</button>
+          <b>Ch. ${it.progress}${it.chapters ? " / " + it.chapters : ""}</b>
+          <button class="plus">+</button>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end">
+        <select>
+          <option ${it.status === "Baca" ? "selected" : ""}>Baca</option>
+          <option ${it.status === "Nanti" ? "selected" : ""}>Nanti</option>
+          <option ${it.status === "Tamat" ? "selected" : ""}>Tamat</option>
+        </select>
+        <button class="del" title="Hapus">🗑</button>
+      </div>`;
+    row.querySelector(".minus").addEventListener("click", () => { it.progress = Math.max(0, it.progress - 1); saveLib(); renderLib(); });
+    row.querySelector(".plus").addEventListener("click", () => { it.progress = it.chapters ? Math.min(it.chapters, it.progress + 1) : it.progress + 1; saveLib(); renderLib(); });
+    row.querySelector("select").addEventListener("change", (e) => { it.status = e.target.value; saveLib(); });
+    row.querySelector(".del").addEventListener("click", () => { delete library[it.id]; saveLib(); renderLib(); refreshSaveButtons(); });
+    wrap.appendChild(row);
+  });
+}
+
+/* ---------- DETAIL MODAL ---------- */
+function openDetail(m) {
+  const sheet = $("#sheet");
+  const links = m.externalLinks || [];
+  const saved = inLib(m.id);
+  const prog = saved ? library[m.id].progress : 0;
+  sheet.innerHTML = `
+    <div class="banner" style="background-image:url('${esc(m.bannerImage || m.coverImage.extraLarge)}')">
+      <button class="x" id="mx">✕</button>
+    </div>
+    <div class="body">
+      <h2>${esc(title(m))}</h2>
+      <div class="alt">${esc(m.title.romaji || "")}${m.startDate && m.startDate.year ? " · " + m.startDate.year : ""}</div>
+      <div class="stats">
+        <i>★ ${m.averageScore ? (m.averageScore / 10).toFixed(1) + " / 10" : "-"}</i>
+        <i>${m.chapters ? m.chapters + " chapter" : "Chapter ?"}</i>
+        <i>${esc(statusId(m.status))}</i>
+        ${(m.genres || []).map((g) => `<i>${esc(g)}</i>`).join("")}
+      </div>
+      <p class="desc">${esc(stripHtml(m.description) || "Belum ada sinopsis.")}</p>
+      ${saved ? `<div class="prog"><span>Progress bacaanmu</span>
+        <div class="stepper">
+          <button id="pminus">−</button><b>Ch. ${prog}</b><button id="pplus">+</button>
+        </div></div>` : ""}
+      <div class="rowbtns">
+        <button class="btn ${saved ? "saved" : "primary"}" id="msave">${saved ? "✓ Di Library" : "+ Simpan ke Library"}</button>
+        <button class="btn" id="manilist">AniList ↗</button>
+      </div>
+      <h4>Baca di sumber resmi</h4>
+      <div class="links">
+        ${links.length ? links.map((l) => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.site)} <small>buka ↗</small></a>`).join("") : `<a href="${esc(m.siteUrl)}" target="_blank" rel="noopener">Cek di AniList <small>buka ↗</small></a>`}
+      </div>
+    </div>`;
+  $("#modal").classList.add("open");
+  $("#mx").addEventListener("click", closeDetail);
+  $("#manilist").addEventListener("click", () => window.open(m.siteUrl, "_blank", "noopener"));
+  $("#msave").addEventListener("click", () => { toggleLib(m); openDetail(m); });
+  if (saved) {
+    $("#pminus").addEventListener("click", () => { library[m.id].progress = Math.max(0, library[m.id].progress - 1); saveLib(); renderLib(); openDetail(m); });
+    $("#pplus").addEventListener("click", () => { const it = library[m.id]; it.progress = it.chapters ? Math.min(it.chapters, it.progress + 1) : it.progress + 1; saveLib(); renderLib(); openDetail(m); });
+  }
+}
+function closeDetail() { $("#modal").classList.remove("open"); }
+$("#modal").addEventListener("click", (e) => { if (e.target.id === "modal") closeDetail(); });
+
+/* ---------- NAV ---------- */
+document.querySelectorAll("nav button").forEach((b) => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("on", x === b));
+    document.querySelectorAll("section.view").forEach((v) => v.classList.toggle("active", v.id === b.dataset.view));
+    if (b.dataset.view === "view-grid" && !gridLoaded) { gridLoaded = true; loadGrid(""); }
+    if (b.dataset.view === "view-lib") renderLib();
+    window.scrollTo(0, 0);
+  });
+});
+
+/* ---------- INIT ---------- */
+renderLib();
+loadFeed(true);
+</script>
+</body>
+</html>
