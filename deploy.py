@@ -21,16 +21,18 @@ def req(method, url, data=None, headers=None, raw=False):
     except urllib.error.HTTPError as e:
         print("HTTP", e.code, e.read().decode()[:400]); sys.exit(1)
 
-fname = "index.html"
-blob = open(os.path.join(ROOT, fname), "rb").read()
-sha = hashlib.sha1(blob).hexdigest()
-req("POST", f"https://api.vercel.com/v2/files?teamId={TEAM}", data=blob, raw=True,
-    headers={"x-vercel-digest": sha, "Content-Type": "application/octet-stream"})
-print("uploaded", fname, len(blob), "bytes")
+files_meta = []
+for fname in ["index.html", "api/anilist.js"]:
+    blob = open(os.path.join(ROOT, fname), "rb").read()
+    sha = hashlib.sha1(blob).hexdigest()
+    req("POST", f"https://api.vercel.com/v2/files?teamId={TEAM}", data=blob, raw=True,
+        headers={"x-vercel-digest": sha, "Content-Type": "application/octet-stream"})
+    files_meta.append({"file": fname, "sha": sha, "size": len(blob)})
+    print("uploaded", fname, len(blob), "bytes")
 
 dep = req("POST", f"https://api.vercel.com/v13/deployments?teamId={TEAM}&skipAutoDetectionConfirmation=1", data={
     "name": PROJECT, "target": "production",
-    "files": [{"file": fname, "sha": sha, "size": len(blob)}],
+    "files": files_meta,
 })
 did = dep["id"]
 print("deployment:", did)

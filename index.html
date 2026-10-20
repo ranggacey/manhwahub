@@ -241,13 +241,24 @@ function toggleLib(m) {
   saveLib(); renderLib(); refreshSaveButtons();
 }
 
-/* ---------- AniList fetch ---------- */
-async function fetchPage({ page, perPage, sort, search }) {
-  const res = await fetch(API, {
+/* ---------- AniList fetch (direct, fallback: same-origin proxy) ---------- */
+async function anilistFetch(payload) {
+  const opts = {
     method: "POST",
     headers: { "Content-Type": "application/json", "Accept": "application/json" },
-    body: JSON.stringify({ query: QUERY, variables: { page, perPage, sort: [sort], search: search || null } }),
-  });
+    body: JSON.stringify(payload),
+  };
+  let res = null;
+  try { res = await fetch(API, opts); } catch (e) { res = null; }
+  if (!res || res.status === 403) {
+    // jaringan pengunjung ga bisa nembus AniList langsung -> lewat proxy server sendiri
+    res = await fetch("/api/anilist", opts);
+  }
+  return res;
+}
+
+async function fetchPage({ page, perPage, sort, search }) {
+  const res = await anilistFetch({ query: QUERY, variables: { page, perPage, sort: [sort], search: search || null } });
   if (res.status === 429) throw new Error("Kena rate limit AniList (terlalu sering). Tunggu ±1 menit lalu coba lagi ya.");
   if (!res.ok) throw new Error("AniList lagi bermasalah (HTTP " + res.status + "). Coba lagi nanti.");
   const json = await res.json();

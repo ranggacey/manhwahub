@@ -1,0 +1,18 @@
+name: probe-anilist
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Direct ke AniList
+        run: |
+          echo "== DIRECT =="
+          curl -s --max-time 40 -X POST https://graphql.anilist.co -H "Content-Type: application/json" \
+            -d '{"query":"query { Page(page:1, perPage:3) { media(type:MANGA, countryOfOrigin:\"KR\", sort:TRENDING_DESC) { title { english romaji } averageScore chapters } } }"}' | head -c 600
+          echo
+      - name: Lewat proxy Vercel ManhwaHub
+        run: |
+          echo "== PROXY =="
+          curl -s --max-time 60 -X POST https://manhwahub-ranggacaisper-5228s-projects.vercel.app/api/anilist -H "Content-Type: application/json" \
+            -d '{"query":"query { Page(page:1, perPage:3) { media(type:MANGA, countryOfOrigin:\"KR\", sort:TRENDING_DESC) { title { english romaji } averageScore chapters } } }"}' | head -c 600
+          echo
