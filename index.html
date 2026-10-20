@@ -170,7 +170,10 @@
   .sheet .stats{display:flex; gap:7px; flex-wrap:wrap; margin:13px 0}
   .sheet .stats i{font-style:normal; font-size:12px; font-weight:600; background:var(--card); border:1px solid var(--line); padding:6px 10px; border-radius:10px; display:flex; align-items:center; gap:5px}
   .sheet .stats i svg{width:13px;height:13px;stroke:var(--gold);fill:var(--gold)}
-  .sheet .desc{font-size:13.5px; line-height:1.68; color:#4a554d}
+  .sheet .desc{font-size:13.5px; line-height:1.68; color:#4a554d; white-space:pre-line}
+  .descmeta{font-size:11px; color:var(--mut); margin-top:8px; display:flex; gap:6px; align-items:center; min-height:14px}
+  .descmeta button{background:none; border:none; color:var(--sage); font-weight:800; cursor:pointer; font-size:11px; padding:0; font-family:inherit; text-decoration:underline}
+  .spin-sm{width:12px; height:12px; border-radius:50%; border:2px solid var(--line); border-top-color:var(--sage); display:inline-block; animation:spin .8s linear infinite}
   .sheet h4{font-family:"Cormorant Garamond",serif; font-size:19px; font-weight:700; margin:19px 0 10px; color:var(--ink)}
   .chars{display:flex; gap:11px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px}
   .chars::-webkit-scrollbar{display:none}
@@ -611,6 +614,40 @@ $("#libtabs").addEventListener("click", (e) => {
   renderLib();
 });
 
+/* ================== TERJEMAHAN SINOPSIS ================== */
+const TR_KEY = "manhwahub-terjemahan-v1";
+let trCache = {};
+try { trCache = JSON.parse(localStorage.getItem(TR_KEY) || "{}"); } catch (e) { trCache = {}; }
+async function setupTranslate(id, original) {
+  const meta = $("#desc-meta");
+  if (!meta) return;
+  let showing = "orig";
+  const render = (mode) => {
+    const el = $("#desc-text");
+    if (!el) return;
+    showing = mode;
+    el.textContent = mode === "id" ? trCache[id] : original;
+    meta.innerHTML = mode === "id"
+      ? `Diterjemahkan otomatis · <button id="tr-toggle" type="button">Lihat aslinya</button>`
+      : `Sinopsis asli (Inggris) · <button id="tr-toggle" type="button">Terjemahkan</button>`;
+    const b = $("#tr-toggle");
+    if (b) b.addEventListener("click", () => render(showing === "id" ? "orig" : "id"));
+  };
+  if (trCache[id]) { render("id"); return; }
+  meta.innerHTML = `<span class="spin-sm"></span> Menerjemahkan sinopsis…`;
+  try {
+    const r = await fetch("/api/translate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: original }) });
+    if (!r.ok) throw new Error("gagal");
+    const j = await r.json();
+    if (!j.translated) throw new Error("gagal");
+    trCache[id] = j.translated;
+    try { localStorage.setItem(TR_KEY, JSON.stringify(trCache)); } catch (e) {}
+    if ($("#desc-text")) render("id");
+  } catch (e) {
+    if ($("#desc-meta")) $("#desc-meta").innerHTML = "";
+  }
+}
+
 /* ================== DETAIL ================== */
 function refreshSaveButtons() {
   $$(".savebtn").forEach((b) => {
@@ -637,7 +674,8 @@ async function openDetail(m) {
         <i>${esc(statusId(m.status))}</i>
         ${(m.genres || []).map((g) => `<i>${esc(genreId(g))}</i>`).join("")}
       </div>
-      <p class="desc">${esc(stripHtml(m.description) || "Belum ada sinopsis untuk judul ini.")}</p>
+      <p class="desc" id="desc-text">${esc(stripHtml(m.description) || "Belum ada sinopsis untuk judul ini.")}</p>
+      <div class="descmeta" id="desc-meta"></div>
       ${saved ? `<div class="prog"><span>Progress bacaanmu</span>
         <div class="stepper"><button id="pminus">−</button><b>Ch. ${prog}</b><button id="pplus">+</button></div></div>` : ""}
       <div class="rowbtns">
@@ -652,6 +690,10 @@ async function openDetail(m) {
       <div id="recs-wrap"></div>
     </div>`;
   $("#modal").classList.add("open");
+  const cleanDesc = stripHtml(m.description).replace(/\s*\(Source:[^)]*\)\.?\s*/gi, " ").replace(/\s{2,}/g, " ").trim();
+  const descEl = $("#desc-text");
+  if (descEl && cleanDesc) descEl.textContent = cleanDesc;
+  if (cleanDesc) setupTranslate(m.id, cleanDesc);
   $("#mx").addEventListener("click", closeDetail);
   sheet.querySelector(".savebtn").addEventListener("click", () => { toggleLib(m); openDetail(m); });
   $("#mshare").addEventListener("click", async () => {
