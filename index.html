@@ -394,15 +394,18 @@ async function gql(query, variables) {
   if (json.errors) throw new Error(json.errors[0].message || "Query error");
   return json.data;
 }
-const PAGE_Q = `query ($page: Int, $perPage: Int, $sort: [MediaSort], $search: String, $genre: String, $status: MediaStatus) {
+function pageQuery(withStatus) {
+  return `query ($page: Int, $perPage: Int, $sort: [MediaSort], $search: String, $genre: [String]${withStatus ? ", $status: MediaStatus" : ""}) {
   Page(page: $page, perPage: $perPage) {
     pageInfo { hasNextPage currentPage }
-    media(type: MANGA, countryOfOrigin: "KR", sort: $sort, search: $search, genre_in: $genre, status: $status, isAdult: false) { ...F }
+    media(type: MANGA, countryOfOrigin: "KR", sort: $sort, search: $search, genre_in: $genre${withStatus ? ", status: $status" : ""}, isAdult: false) { ...F }
   }
 } ${FRAG}`;
+}
 function fetchPage(v) {
-  return gql(PAGE_Q, { page: v.page, perPage: v.perPage, sort: [v.sort], search: v.search || null, genre: v.genre || null, status: v.status || null })
-    .then((d) => d.Page);
+  const vars = { page: v.page, perPage: v.perPage, sort: [v.sort], search: v.search || null, genre: v.genre ? [v.genre] : null };
+  if (v.status) vars.status = v.status;
+  return gql(pageQuery(!!v.status), vars).then((d) => d.Page);
 }
 function readLink(m) {
   const links = m.externalLinks || [];
