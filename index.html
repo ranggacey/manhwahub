@@ -356,6 +356,10 @@ const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&":
 const stripHtml = (h) => { const d = document.createElement("div"); d.innerHTML = h || ""; return (d.textContent || "").replace(/\s+/g, " ").trim(); };
 const title = (m) => (m.title.english || m.title.romaji || m.title.native || "Tanpa Judul");
 const statusId = (s) => ({ RELEASING: "Berlangsung", FINISHED: "Tamat", NOT_YET_RELEASED: "Belum Rilis", CANCELLED: "Batal", HIATUS: "Hiatus" }[s] || "-");
+const chapText = (m) => {
+  if (m.chapters) return m.status === "RELEASING" ? m.chapters + " chapter · ongoing" : m.chapters + " chapter · " + statusId(m.status);
+  return m.status === "RELEASING" ? "Chapter ongoing" : "Chapter belum diketahui · " + statusId(m.status);
+};
 const genreId = (g) => { const f = GENRES.find((x) => x[0] === g); return f ? f[1] : g; };
 const score = (m) => (m.averageScore ? (m.averageScore / 10).toFixed(1) : "-");
 function toast(msg, icon) {
@@ -425,7 +429,7 @@ function miniCard(m, opts) {
     <div class="cov"><img src="${esc(m.coverImage.extraLarge)}" alt="" loading="lazy">
       <span class="sc"><svg class="ic"><use href="#i-star"/></svg>${score(m)}</span></div>
     <h4>${esc(title(m))}</h4>
-    <p>${m.chapters ? m.chapters + " chapter" : "? chapter"} · ${esc(statusId(m.status))}</p>
+    <p>${esc(chapText(m))}</p>
     ${pct != null ? `<div class="bar"><i style="width:${pct}%"></i></div><p>Ch. ${opts.progress} · ${pct}%</p>` : ""}`;
   el.addEventListener("click", () => openDetail(m));
   return el;
@@ -444,7 +448,7 @@ function buildHero(items) {
       <div class="cap">
         <div class="kick"><svg class="ic sm" style="stroke:var(--gold)"><use href="#i-flame"/></svg> Sorotan Trending</div>
         <h3>${esc(title(m))}</h3>
-        <div class="mm"><i>★ ${score(m)}</i><i>${m.chapters ? m.chapters + " chapter" : "Chapter ?"}</i><i>${esc(statusId(m.status))}</i>${(m.genres || []).slice(0, 2).map((g) => `<i>${esc(genreId(g))}</i>`).join("")}</div>
+        <div class="mm"><i>★ ${score(m)}</i><i>${esc(chapText(m))}</i>${(m.genres || []).slice(0, 2).map((g) => `<i>${esc(genreId(g))}</i>`).join("")}</div>
       </div>
     </div>`).join("")}</div>
     <div class="dots">${list.map((_, i) => `<b data-i="${i}" class="${i === 0 ? "on" : ""}"></b>`).join("")}</div>`;
@@ -558,7 +562,7 @@ async function loadTop() {
         <div class="no">${i + 1}</div>
         <img src="${esc(m.coverImage.extraLarge)}" alt="" loading="lazy">
         <div class="mid"><h4>${esc(title(m))}</h4>
-        <p><svg class="ic"><use href="#i-star"/></svg>${score(m)} · ${m.chapters ? m.chapters + " chapter" : "? chapter"} · ${esc(statusId(m.status))}</p></div>
+        <p><svg class="ic"><use href="#i-star"/></svg>${score(m)} · ${esc(chapText(m))}</p></div>
         <svg class="ic chev"><use href="#i-chev"/></svg>`;
       row.addEventListener("click", () => openDetail(m));
       c.appendChild(row);
@@ -676,8 +680,7 @@ async function openDetail(m) {
       <div class="alt">${esc(m.title.romaji || "")}${m.startDate && m.startDate.year ? " · " + m.startDate.year : ""} · Manhwa</div>
       <div class="stats">
         <i><svg class="ic"><use href="#i-star"/></svg>${score(m)} / 10</i>
-        <i>${m.chapters ? m.chapters + " chapter" : "Chapter ?"}</i>
-        <i>${esc(statusId(m.status))}</i>
+        <i>${esc(chapText(m))}</i>
         ${(m.genres || []).map((g) => `<i>${esc(genreId(g))}</i>`).join("")}
       </div>
       <p class="desc" id="desc-text">${esc(stripHtml(m.description) || "Belum ada sinopsis untuk judul ini.")}</p>
