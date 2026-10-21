@@ -394,11 +394,20 @@ async function gql(query, variables) {
   const opts = { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify({ query, variables }) };
   let res = null;
   try { res = await fetch(API, opts); } catch (e) { res = null; }
-  if (!res || res.status === 403) res = await fetch("/api/anilist", opts);
+  if (!res || res.status === 403) {
+    try { res = await fetch("/api/anilist", opts); } catch (e) { res = null; }
+  }
+  if (!res) throw new Error("Nggak bisa nyambung ke AniList. Cek koneksi internetmu, lalu coba lagi ya.");
+  let json = null;
+  try { json = await res.json(); } catch (e) { json = null; }
+  if (json && json.errors && json.errors.length) {
+    const msg = json.errors[0].message || "Query error";
+    if (/temporarily disabled/i.test(msg)) throw new Error("Server AniList lagi dimatikan sementara dari pusatnya (lagi ada gangguan besar). Ini bukan salah HP atau situs ini — coba lagi beberapa menit lagi ya.");
+    throw new Error(msg);
+  }
   if (res.status === 429) throw new Error("Kena batas AniList (terlalu sering). Tunggu ±1 menit, lalu coba lagi ya.");
   if (!res.ok) throw new Error("AniList lagi bermasalah (HTTP " + res.status + "). Coba lagi nanti.");
-  const json = await res.json();
-  if (json.errors) throw new Error(json.errors[0].message || "Query error");
+  if (!json || !json.data) throw new Error("Jawaban AniList kosong. Coba lagi ya.");
   return json.data;
 }
 function pageQuery(withStatus) {
